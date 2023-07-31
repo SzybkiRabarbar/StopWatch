@@ -1,4 +1,3 @@
-# py instaler
 import tkinter as tk
 from tkinter import ttk
 
@@ -24,8 +23,8 @@ def loop():
 
 window = tk.Tk()
 window.title("Timer")
-icon = tk.PhotoImage(file="timer-icon.png")
-window.iconphoto(True,icon)
+#icon = tk.PhotoImage(file="timer-icon.png")
+#window.iconphoto(True,icon)
 window.geometry("300x150")
 window.config(bg="#011638")
 
