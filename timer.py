@@ -1,4 +1,7 @@
 
+# TODO zrobić zapisywanie danych do pliku csv
+# TODO okienko wyskakujące po wyłączeniu timera z prośbą wybrania opisu i wybór szablonu
+# TODO połączyć dane z csv z kalendarzem (wyśweitlanie contentu, calevents)
 # TODO dodać kalendarz z czasem pracy i czasem przerwy (main_time, break_time)
     # TODO dodawanie do kalendarza po zamknięciu okiennka timer
     # TODO tkcalendar, ale po kliknięciu na dzień otwiera się aktywność
@@ -11,11 +14,17 @@
 # TODO sprawdzić czy jest możliwość inplementacji animacji
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
+import tkcalendar as tkc
+from datetime import datetime
+
 
 class TimerApp():
     
     def __init__(self) -> None:
+        self.time_reset()
+    
+    def time_reset(self) -> None:
         self.main_time = False
         self.break_time = False
         self.current_break_time = False
@@ -41,7 +50,7 @@ class TimerApp():
             """
             Checks if update main timer or stop timer and updates it
             """
-            #! loop dont stop after WM_DELETE_WINDOW and rises 
+            #! loop dont stop after WM_DELETE_WINDOW and rises (this error ocurs in other loops in code)
             #? 'invalid command name "loop" while executing "loop" ("after" script)'
             if is_running.get():
                 button_text.set("STOP")
@@ -58,7 +67,7 @@ class TimerApp():
         timer_window.title("Timer")
         icon = tk.PhotoImage(file="timer-icon.png")
         timer_window.iconphoto(True,icon)
-        timer_window.geometry("300x150")
+        timer_window.geometry("300x150" + self.window_shift)
         timer_window.config(bg="#011638")
         
         #| main_time stores the time (in sec)
@@ -124,21 +133,104 @@ class TimerApp():
 
         time_loop()
         
-        timer_window.protocol("WM_DELETE_WINDOW", lambda: [timer_window.destroy(), self.open_main_window()])
+        timer_window.protocol("WM_DELETE_WINDOW", lambda: [timer_window.destroy(), self.open_save_window()])
+    
+    def open_save_window(self):
+        
+        save_window = tk.Tk()
+        save_window.title("Save your time")
+        save_window.geometry("400x400" + self.window_shift)
+        save_window.config(bg="#011638")
+        
+        #| Contains main_timer and break_timer from session
+        time_frame = tk.Frame(save_window)
+        time_frame.config(background='#011638')
+        time_frame.pack(pady=20)
+        
+        session_time_style = ttk.Style()
+        session_time_style.configure("BW.TLabel",
+            font=("Ariel",15),
+            foreground="#E8C1C5", 
+            background="#011638")
+        
+        heading_main_time = ttk.Label(time_frame,
+            style="BW.TLabel",
+            text="Dedicated time:")
+        heading_main_time.pack()
+        
+        session_main_time = tk.Label(time_frame,
+            font=("Ariel",40),
+            fg="#E8C1C5",
+            bg="#011638",
+            text=self.main_timer.get())
+        session_main_time.pack()
+        
+        heading_break_time = ttk.Label(time_frame,
+            style="BW.TLabel",
+            text="Breaks time:")
+        heading_break_time.pack()
+        
+        session_break_label = ttk.Label(time_frame,
+            style="BW.TLabel",
+            text=self.break_timer.get()
+            )
+        session_break_label.pack()
+        
+        #self.time_reset()
+        save_window.protocol("WM_DELETE_WINDOW", lambda: [save_window.destroy(), self.open_main_window()])
     
     def open_calendar_window(self):
+        """
+        Shows window with calendar where you can pick date and show data form picked day
+        """
+        def grab_date():
+        
+            if self.temp != cal.get_date():
+                self.temp = cal.get_date()
+                print("Wybrana data to:", cal.get_date())
+                content.config(text="Wybrana data to: " + cal.get_date())
+        
+            cal_window.after(100,grab_date)
         
         self.root.destroy()
         cal_window = tk.Tk()
         cal_window.title("Calendar")
-        cal_window.geometry("300x150")
+        cal_window.geometry("400x400" + self.window_shift)
         cal_window.config(bg="#011638")
+        self.temp = ''
         
-        if self.main_time and self.break_time and self.current_break_time:
-            txt = f'{self.main_time.get()} | {self.break_time.get()} | {self.current_break_time.get()}'
-            t = tk.Label(cal_window,
-                text=txt)
-            t.pack()
+        
+        # if self.main_time and self.break_time and self.current_break_time:
+        #     txt = f'{self.main_time.get()} | {self.break_time.get()} | {self.current_break_time.get()}'
+        #     t = tk.Label(cal_window,
+        #         text=txt)
+        #     t.pack()
+        
+        ## Time
+        today = datetime.now()
+        y = today.year
+        m = today.month
+        d = today.day
+        
+        #* przekształcić na liste pobraną z csv
+        lst = [['2023-08-22', '', 'smth'],
+               ['2023-08-20', '', 'smth'],
+               ['2023-08-18', '', 'smth']]
+        
+        cal = tkc.Calendar(cal_window, selectmode='day', year=y, month=m, day=d, date_pattern='y-mm-dd')
+        
+        for line in lst:
+            date = datetime.strptime(line[0], '%Y-%m-%d')
+            cal.calevent_create(date, line[1], line[2])
+        
+        cal.tag_config('smth', background='red', foreground='yellow')
+
+        cal.pack(pady=20)
+        
+        content = tk.Label(cal_window, text="")
+        content.pack(pady=20)
+        
+        grab_date()
         
         cal_window.protocol("WM_DELETE_WINDOW", lambda: [cal_window.destroy(), self.open_main_window()])
         
@@ -151,6 +243,8 @@ class TimerApp():
         self.root.config(bg="#011638")
         icon = tk.PhotoImage(file="timer-icon.png")
         self.root.iconphoto(True,icon)
+        self.window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 3}"
+        self.root.geometry(self.window_shift)
         
         button_to_timer = tk.Button(self.root,
             text="Timer",
@@ -176,6 +270,7 @@ class TimerApp():
 
         self.root.mainloop()
     
+            
 if __name__=="__main__":
     t = TimerApp()
     t.open_main_window()
