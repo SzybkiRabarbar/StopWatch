@@ -12,12 +12,14 @@
 # TODO sprawdzić zapisywanie plików również po nieoczekikwanym zamknięciu aplikacji
 # TODO sprawdzić zmiane domyślnego paska
 # TODO sprawdzić czy jest możliwość inplementacji animacji
+# TODO przerobić baze na sql i mergować indeksami
 
 import tkinter as tk
 from tkinter import ttk, messagebox
 import tkcalendar as tkc
 from datetime import datetime
-
+import pandas as pd
+from os.path import exists
 
 class TimerApp():
     
@@ -63,10 +65,11 @@ class TimerApp():
             timer_window.after(1000, time_loop) 
 
         self.root.destroy()
+        self.start_time = datetime.now()
         timer_window = tk.Tk()
         timer_window.title("Timer")
-        icon = tk.PhotoImage(file="timer-icon.png")
-        timer_window.iconphoto(True,icon)
+        # icon = tk.PhotoImage(file="timer-icon.png")
+        # timer_window.iconphoto(True,icon)
         timer_window.geometry("300x150" + self.window_shift)
         timer_window.config(bg="#011638")
         
@@ -96,7 +99,7 @@ class TimerApp():
             indicatoron=False)
         stop_button.pack()
         
-        #| Freame for breaks timers
+        #| Frame for breaks timers
         frame = tk.Frame(timer_window)
         frame.pack()
 
@@ -136,6 +139,25 @@ class TimerApp():
         timer_window.protocol("WM_DELETE_WINDOW", lambda: [timer_window.destroy(), self.open_save_window()])
     
     def open_save_window(self):
+        """
+        Show a window with times in session, field to enter desc and to pick activity
+        """
+        def save_to_csv_and_quit():
+            """
+            Saves data to csv and destroys window
+            """
+            df = pd.DataFrame({
+                'date': [self.start_time.strftime('%Y-%m-%d')],
+                'start_time': [self.start_time.strftime('%H:%M:%S')],
+                'main_time': [self.main_time.get()],
+                'break_time': [self.break_time.get()],
+                'desc': ['desc not added yet'],
+                'activity': ['smth']
+            })
+            print(df)
+            df.to_csv('data.csv',index=False, mode='a', header=not exists('data.csv'))
+            save_window.destroy()
+            self.open_main_window()
         
         save_window = tk.Tk()
         save_window.title("Save your time")
@@ -176,7 +198,22 @@ class TimerApp():
             )
         session_break_label.pack()
         
-        #self.time_reset()
+        text_widget = tk.Text(save_window,
+            bg="light yellow",
+            font=("Ink Free",15),
+            height=5,
+            width=25,
+            padx=20,
+            pady=20,
+            fg="purple")
+        text_widget.pack()
+        
+        #| Run save_to_csv_and_quit func
+        save_button = tk.Button(save_window,
+                                text="Save",
+                                command=save_to_csv_and_quit)
+        save_button.pack()
+        
         save_window.protocol("WM_DELETE_WINDOW", lambda: [save_window.destroy(), self.open_main_window()])
     
     def open_calendar_window(self):
@@ -213,9 +250,17 @@ class TimerApp():
         d = today.day
         
         #* przekształcić na liste pobraną z csv
-        lst = [['2023-08-22', '', 'smth'],
-               ['2023-08-20', '', 'smth'],
-               ['2023-08-18', '', 'smth']]
+        lst = [
+            ['2023-08-22', '', 'smth'],
+            ['2023-08-20', '', 'running'],
+            ['2023-08-18', '', 'smth'],
+            ['2023-08-10', '', 'running']
+        ]
+        
+        activites = [
+            ['running', '#8f9491', '#F3EAF4'],
+            ['smth', '#2C5530', '#F3FFB6']
+        ]
         
         cal = tkc.Calendar(cal_window, selectmode='day', year=y, month=m, day=d, date_pattern='y-mm-dd')
         
@@ -223,7 +268,8 @@ class TimerApp():
             date = datetime.strptime(line[0], '%Y-%m-%d')
             cal.calevent_create(date, line[1], line[2])
         
-        cal.tag_config('smth', background='red', foreground='yellow')
+        for activity in activites:
+            cal.tag_config(activity[0], background=activity[1], foreground=activity[2])
 
         cal.pack(pady=20)
         
@@ -241,8 +287,8 @@ class TimerApp():
         self.root = tk.Tk()
         self.root.title("TimerApp")
         self.root.config(bg="#011638")
-        icon = tk.PhotoImage(file="timer-icon.png")
-        self.root.iconphoto(True,icon)
+        # icon = tk.PhotoImage(file="timer-icon.png")
+        # self.root.iconphoto(True,icon)
         self.window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 3}"
         self.root.geometry(self.window_shift)
         
