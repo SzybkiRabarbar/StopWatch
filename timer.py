@@ -1,11 +1,6 @@
 
-# TODO zrobić zapisywanie danych do pliku csv
-# TODO okienko wyskakujące po wyłączeniu timera z prośbą wybrania opisu i wybór szablonu
-# TODO połączyć dane z csv z kalendarzem (wyśweitlanie contentu, calevents)
+# TODO dodać do save window wybór activity z combobox, sprawdzenie czy taka już istnieje, jeśli nie zapytać o kolory
 # TODO dodać kalendarz z czasem pracy i czasem przerwy (main_time, break_time)
-    # TODO dodawanie do kalendarza po zamknięciu okiennka timer
-    # TODO tkcalendar, ale po kliknięciu na dzień otwiera się aktywność
-    # TODO oznaczyć na tkcalendarze że jest jakaś aktywnosć danego dnia (mała kropka, zmieniony kolor itp)
     # TODO zrobienie szablonów (aktywność można podpiąć pod jakąś aktywnosć (np programowanie) z unikalnym kolorem, nazwą opisem itp)
 # TODO obszar podsumowania zliczający wszystkie aktywności dla każdego szablonu
 # TODO w kalendarzu dodać przesyłanie do google calendar (pomyśleć jak połączyc różne sesje, jak je zapisać w lokalnym kalenadarzu, przy dodawaniu podać nazwe, opis itp)
@@ -15,7 +10,7 @@
 # TODO przerobić baze na sql i mergować indeksami
 
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk
 import tkcalendar as tkc
 from datetime import datetime
 import pandas as pd
@@ -151,7 +146,7 @@ class TimerApp():
                 'start_time': [self.start_time.strftime('%H:%M:%S')],
                 'main_time': [self.main_time.get()],
                 'break_time': [self.break_time.get()],
-                'desc': ['desc not added yet'],
+                'desc': [text_widget.get('1.0', tk.END)],
                 'activity': ['smth']
             })
             print(df)
@@ -198,6 +193,7 @@ class TimerApp():
             )
         session_break_label.pack()
         
+        #| Input desc
         text_widget = tk.Text(save_window,
             bg="light yellow",
             font=("Ink Free",15),
@@ -218,24 +214,53 @@ class TimerApp():
     
     def open_calendar_window(self):
         """
-        Shows window with calendar where you can pick date and show data form picked day
+        Shows window with calendar where you can pick date and show data from picked day
         """
         def grab_date():
-        
-            if self.temp != cal.get_date():
-                self.temp = cal.get_date()
-                print("Wybrana data to:", cal.get_date())
-                content.config(text="Wybrana data to: " + cal.get_date())
-        
+            """
+            Grabs date from calendar, call print_actions func
+            """
+            if self.picked_date != cal.get_date():
+                self.picked_date = cal.get_date()
+                # print("Wybrana data to:", cal.get_date())
+                content_title.config(text=cal.get_date())
+                print_actions()
             cal_window.after(100,grab_date)
-        
+            
+        def print_actions():
+            """
+            Prints actions from picked date in content frame
+            """
+            actions = self.data[self.data['date'] == self.picked_date]        
+            
+            for widget in content.winfo_children():
+                widget.destroy()
+            
+            for action in actions.values.tolist():
+                action_frame = tk.Frame(content, background='#FFFF00')
+                action_frame.pack()
+                title = tk.Label(
+                    action_frame,
+                    text=f"{action[1]} {action[5]}"
+                )
+                title.pack()
+                time_spent = tk.Label(
+                    action_frame,
+                    text=f"{action[2]} {action[3]}"
+                )
+                time_spent.pack()
+                desc = tk.Label(
+                    action_frame,
+                    text=f"{action[4]}"
+                )
+                desc.pack()
+            
         self.root.destroy()
         cal_window = tk.Tk()
         cal_window.title("Calendar")
         cal_window.geometry("400x400" + self.window_shift)
         cal_window.config(bg="#011638")
-        self.temp = ''
-        
+        self.picked_date = ''
         
         # if self.main_time and self.break_time and self.current_break_time:
         #     txt = f'{self.main_time.get()} | {self.break_time.get()} | {self.current_break_time.get()}'
@@ -243,38 +268,31 @@ class TimerApp():
         #         text=txt)
         #     t.pack()
         
-        ## Time
+        #| Time
         today = datetime.now()
         y = today.year
         m = today.month
         d = today.day
-        
-        #* przekształcić na liste pobraną z csv
-        lst = [
-            ['2023-08-22', '', 'smth'],
-            ['2023-08-20', '', 'running'],
-            ['2023-08-18', '', 'smth'],
-            ['2023-08-10', '', 'running']
-        ]
-        
-        activites = [
-            ['running', '#8f9491', '#F3EAF4'],
-            ['smth', '#2C5530', '#F3FFB6']
-        ]
-        
+    
+        #| creates calendar with events
         cal = tkc.Calendar(cal_window, selectmode='day', year=y, month=m, day=d, date_pattern='y-mm-dd')
         
-        for line in lst:
-            date = datetime.strptime(line[0], '%Y-%m-%d')
-            cal.calevent_create(date, line[1], line[2])
+        self.data = pd.read_csv('data.csv')
+        for d in self.data.values.tolist(): # TODO zmienic d na normalną nazwe 
+            date = datetime.strptime(d[0], '%Y-%m-%d')
+            cal.calevent_create(date, d[4], d[5])
         
+        activites = pd.read_csv('activity.csv').values.tolist()
         for activity in activites:
             cal.tag_config(activity[0], background=activity[1], foreground=activity[2])
 
         cal.pack(pady=20)
         
-        content = tk.Label(cal_window, text="")
-        content.pack(pady=20)
+        content_title = tk.Label(cal_window, text="")
+        content_title.pack(pady=20)
+        
+        content = tk.Frame(cal_window)
+        content.pack()
         
         grab_date()
         
