@@ -1,16 +1,15 @@
 
-# TODO dodać do save window wybór activity z combobox, sprawdzenie czy taka już istnieje, jeśli nie zapytać o kolory
-# TODO dodać kalendarz z czasem pracy i czasem przerwy (main_time, break_time)
-    # TODO zrobienie szablonów (aktywność można podpiąć pod jakąś aktywnosć (np programowanie) z unikalnym kolorem, nazwą opisem itp)
+# TODO poprawic wyświetlanie się akywności pod kalendarzem (open_calendar_window -> print_action)
 # TODO obszar podsumowania zliczający wszystkie aktywności dla każdego szablonu
+# TODO obszar zmiany koloru danej aktywności
 # TODO w kalendarzu dodać przesyłanie do google calendar (pomyśleć jak połączyc różne sesje, jak je zapisać w lokalnym kalenadarzu, przy dodawaniu podać nazwe, opis itp)
-# TODO sprawdzić zapisywanie plików również po nieoczekikwanym zamknięciu aplikacji
 # TODO sprawdzić zmiane domyślnego paska
 # TODO sprawdzić czy jest możliwość inplementacji animacji
 # TODO przerobić baze na sql i mergować indeksami
 
 import tkinter as tk
 from tkinter import ttk
+from tkinter.colorchooser import askcolor
 import tkcalendar as tkc
 from datetime import datetime
 import pandas as pd
@@ -27,13 +26,11 @@ class TimerApp():
         self.current_break_time = False
         
     def open_timer_window(self):
-        
         """
         Shows a window with main timer, button, break timer and currnet break timer.
         Normally main timer counts down the time,but then button is unclicked break timer and currnet break timer starts counts.
         Break timer stores time of sum of all 'breaks' and current break timer stores time of current break.
         """
-        
         def update(time: tk.IntVar, timer: tk.StringVar) -> tuple[tk.IntVar, tk.StringVar]:
             """
             Updates given time and return new time value and string timer to display
@@ -45,10 +42,9 @@ class TimerApp():
 
         def time_loop():
             """
+            Loop
             Checks if update main timer or stop timer and updates it
-            """
-            #! loop dont stop after WM_DELETE_WINDOW and rises (this error ocurs in other loops in code)
-            #? 'invalid command name "loop" while executing "loop" ("after" script)'
+            """        
             if is_running.get():
                 button_text.set("STOP")
                 self.current_break_time.set(0)
@@ -57,99 +53,131 @@ class TimerApp():
                 button_text.set("START")
                 self.current_break_time, self.current_break_timer = update(self.current_break_time, self.current_break_timer)
                 self.break_time, self.break_timer = update(self.break_time, self.break_timer)    
-            timer_window.after(1000, time_loop) 
+            self.loop_id = timer_window.after(1000, time_loop) 
 
         self.root.destroy()
         self.start_time = datetime.now()
         timer_window = tk.Tk()
         timer_window.title("Timer")
-        # icon = tk.PhotoImage(file="timer-icon.png")
-        # timer_window.iconphoto(True,icon)
         timer_window.geometry("300x150" + self.window_shift)
         timer_window.config(bg="#011638")
         
+        #* MAIN TIMER
         #| main_time stores the time (in sec)
         self.main_time = tk.IntVar(value=0)
         #| main_timer stores formated main_time (H:M:S)
         self.main_timer = tk.StringVar()
-        main_label = tk.Label(timer_window, 
+        main_label = tk.Label(
+            timer_window, 
             font=("Ariel",40),
             pady=12,
             fg="#E8C1C5",
             bg="#011638",
-            textvariable=self.main_timer)
+            textvariable=self.main_timer
+        )
         main_label.pack()
 
-        
+        #* STOP BUTTON
         #| stop_button indicates wich time should be updated (main_time or break_time)
+        #| changes is_running bool var with is used in time_loop func
         is_running = tk.IntVar(value=1)
         button_text = tk.StringVar(value="STOP")
-        stop_button = tk.Checkbutton(timer_window, 
+        stop_button = tk.Checkbutton(
+            timer_window, 
             font=("Ariel",15),
             fg="#D499B9",
             bg="#011638",
             selectcolor="#2E294E", 
             variable=is_running, 
             textvariable=button_text, 
-            indicatoron=False)
+            indicatoron=False
+        )
         stop_button.pack()
         
+        #* BREAKS TIMERS FRAME
         #| Frame for breaks timers
-        frame = tk.Frame(timer_window)
-        frame.pack()
+        break_frame = tk.Frame(timer_window)
+        break_frame.pack()
 
         #| Style for breaks timers
         style = ttk.Style()
-        style.configure("BW.TLabel",
+        style.configure(
+            "BW.TLabel",
             font=("Ariel",15),
             foreground="#E8C1C5", 
             background="#011638"
-            )
+        )
 
+        #* BREAK TIMER
         #| break_time stores the time (in sec)
         self.break_time = tk.IntVar(value=0)
         #| break_timer stores formated break_time (H:M:S)
         self.break_timer = tk.StringVar()
-        break_label = ttk.Label(frame,
+        break_label = ttk.Label(
+            break_frame,
             style="BW.TLabel",
-            textvariable=self.break_timer)
+            textvariable=self.break_timer
+        )
         break_label.pack(side="left")
 
-        pipe = ttk.Label(frame,
+        ttk.Label(
+            break_frame,
             style="BW.TLabel",
-            text="|")
-        pipe.pack(side="left")
+            text="|"
+        ).pack(side="left")
 
+        #* CURRENT BREAK TIMER
         #| current_break_time stores the time (in sec)
         self.current_break_time = tk.IntVar(value=0)
         #| current_break_timer stores formated current_break_time (H:M:S)
         self.current_break_timer = tk.StringVar()
-        current_break_label = ttk.Label(frame,
+        current_break_label = ttk.Label(
+            break_frame,
             style="BW.TLabel",
-            textvariable=self.current_break_timer)
+            textvariable=self.current_break_timer
+        )
         current_break_label.pack(side="right")
 
+        #* LOOP
         time_loop()
         
-        timer_window.protocol("WM_DELETE_WINDOW", lambda: [timer_window.destroy(), self.open_save_window()])
+        #| Instructions that are executed after the program closes
+        timer_window.protocol("WM_DELETE_WINDOW", lambda: [timer_window.after_cancel(self.loop_id), timer_window.destroy(), self.open_save_window()])
     
     def open_save_window(self):
         """
-        Show a window with times in session, field to enter desc and to pick activity
+        Show a window with times in session, field to enter desc and to pick activity, saves data in csv
         """
         def save_to_csv_and_quit():
             """
             Saves data to csv and destroys window
             """
+            picked_activity = activity_cbox.get().upper() if activity_cbox.get() else 'SOMETHING'
+            #| If picked activity isn't in activity.csv, takes inputs about bgcolor and fgcolor then append to activity db [name,bg,fg]
+            if not picked_activity in activity_values: 
+                bg_color = askcolor(
+                    title=f"Choose backgroud color for {picked_activity}",
+                    color='pink'
+                )[1]
+                fg_color = askcolor(
+                    title=f"Choose text color for {picked_activity}",
+                    color='blue'
+                )[1]
+                activity_df = pd.DataFrame({
+                    'name': [picked_activity],
+                    'bg': [bg_color if bg_color else '#000000'],
+                    'fg': [fg_color if fg_color else '#ffffff']
+                })
+                activity_df.to_csv('activity.csv', index=False, mode='a', header=False)
+                
             df = pd.DataFrame({
                 'date': [self.start_time.strftime('%Y-%m-%d')],
                 'start_time': [self.start_time.strftime('%H:%M:%S')],
                 'main_time': [self.main_time.get()],
                 'break_time': [self.break_time.get()],
                 'desc': [text_widget.get('1.0', tk.END)],
-                'activity': ['smth']
+                'activity': [picked_activity]
             })
-            print(df)
             df.to_csv('data.csv',index=False, mode='a', header=not exists('data.csv'))
             save_window.destroy()
             self.open_main_window()
@@ -159,73 +187,102 @@ class TimerApp():
         save_window.geometry("400x400" + self.window_shift)
         save_window.config(bg="#011638")
         
-        #| Contains main_timer and break_timer from session
+        #* TIME FRAME
+        #| Contains main_timer, break_timer from session and static text
         time_frame = tk.Frame(save_window)
         time_frame.config(background='#011638')
         time_frame.pack(pady=20)
         
         session_time_style = ttk.Style()
-        session_time_style.configure("BW.TLabel",
+        session_time_style.configure(
+            "BW.TLabel",
             font=("Ariel",15),
             foreground="#E8C1C5", 
-            background="#011638")
+            background="#011638"
+        )
         
-        heading_main_time = ttk.Label(time_frame,
+        heading_main_time = ttk.Label(
+            time_frame,
             style="BW.TLabel",
-            text="Dedicated time:")
+            text="Dedicated time:"
+        )
         heading_main_time.pack()
         
-        session_main_time = tk.Label(time_frame,
+        session_main_time = tk.Label(
+            time_frame,
             font=("Ariel",40),
             fg="#E8C1C5",
             bg="#011638",
-            text=self.main_timer.get())
+            text=self.main_timer.get()
+        )
         session_main_time.pack()
         
-        heading_break_time = ttk.Label(time_frame,
+        heading_break_time = ttk.Label(
+            time_frame,
             style="BW.TLabel",
-            text="Breaks time:")
+            text="Breaks time:"
+        )
         heading_break_time.pack()
         
-        session_break_label = ttk.Label(time_frame,
+        session_break_label = ttk.Label(
+            time_frame,
             style="BW.TLabel",
             text=self.break_timer.get()
-            )
+        )
         session_break_label.pack()
         
-        #| Input desc
-        text_widget = tk.Text(save_window,
+        #* TEXT WIDGET
+        #| Takes desc
+        text_widget = tk.Text(
+            save_window,
             bg="light yellow",
             font=("Ink Free",15),
             height=5,
             width=25,
             padx=20,
             pady=20,
-            fg="purple")
+            fg="purple"
+        )
         text_widget.pack()
         
-        #| Run save_to_csv_and_quit func
-        save_button = tk.Button(save_window,
-                                text="Save",
-                                command=save_to_csv_and_quit)
-        save_button.pack()
+        #* BOTTOM FRAME
+        #| Contains save_button and activity combobox
+        bottom = tk.Frame(save_window)
+        bottom.pack()
         
+        #| Run save_to_csv_and_quit func
+        save_button = tk.Button(
+            bottom,
+            text="Save",
+            command=save_to_csv_and_quit
+        )
+        save_button.pack(side='left', padx=(0,10))
+        
+        #| ComboBox to pick activity
+        activity_values = [x[0] for x in pd.read_csv('activity.csv').values.tolist()]
+        activity_cbox = ttk.Combobox(
+            bottom,
+            values=activity_values
+        )
+        activity_cbox.pack(side='right')
+        
+        #| Instructions that are executed after the program closes
         save_window.protocol("WM_DELETE_WINDOW", lambda: [save_window.destroy(), self.open_main_window()])
     
     def open_calendar_window(self):
         """
         Shows window with calendar where you can pick date and show data from picked day
         """
-        def grab_date():
+        def grab_date_loop():
             """
+            Loop
             Grabs date from calendar, call print_actions func
             """
             if self.picked_date != cal.get_date():
                 self.picked_date = cal.get_date()
-                # print("Wybrana data to:", cal.get_date())
                 content_title.config(text=cal.get_date())
                 print_actions()
-            cal_window.after(100,grab_date)
+            self.loop_id = cal_window.after(100,grab_date_loop)
             
         def print_actions():
             """
@@ -233,9 +290,11 @@ class TimerApp():
             """
             actions = self.data[self.data['date'] == self.picked_date]        
             
-            for widget in content.winfo_children():
+            #| Deletes data from previos picked day
+            for widget in content.winfo_children(): 
                 widget.destroy()
             
+            #| Prints data
             for action in actions.values.tolist():
                 action_frame = tk.Frame(content, background='#FFFF00')
                 action_frame.pack()
@@ -262,18 +321,12 @@ class TimerApp():
         cal_window.config(bg="#011638")
         self.picked_date = ''
         
-        # if self.main_time and self.break_time and self.current_break_time:
-        #     txt = f'{self.main_time.get()} | {self.break_time.get()} | {self.current_break_time.get()}'
-        #     t = tk.Label(cal_window,
-        #         text=txt)
-        #     t.pack()
-        
-        #| Time
         today = datetime.now()
         y = today.year
         m = today.month
         d = today.day
-    
+
+        #* CALENDAR
         #| creates calendar with events
         cal = tkc.Calendar(cal_window, selectmode='day', year=y, month=m, day=d, date_pattern='y-mm-dd')
         
@@ -288,15 +341,19 @@ class TimerApp():
 
         cal.pack(pady=20)
         
+        #* CONTENT
+        #| show data drom data.db content is updated by print_actions (func is called in grab_date func)
         content_title = tk.Label(cal_window, text="")
         content_title.pack(pady=20)
         
         content = tk.Frame(cal_window)
         content.pack()
         
-        grab_date()
+        #* LOOP
+        grab_date_loop()
         
-        cal_window.protocol("WM_DELETE_WINDOW", lambda: [cal_window.destroy(), self.open_main_window()])
+        #| Instructions that are executed after the program closes
+        cal_window.protocol("WM_DELETE_WINDOW", lambda: [cal_window.after_cancel(self.loop_id), cal_window.destroy(), self.open_main_window()])
         
     def open_main_window(self):
         """
@@ -310,7 +367,8 @@ class TimerApp():
         self.window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 3}"
         self.root.geometry(self.window_shift)
         
-        button_to_timer = tk.Button(self.root,
+        button_to_timer = tk.Button(
+            self.root,
             text="Timer",
             fg="#011638", 
             bg="#E8C1C5",
@@ -318,10 +376,12 @@ class TimerApp():
             pady= 12,
             padx= 50,
             font=("Ariel", 40 , 'bold'),
-            command=self.open_timer_window)
+            command=self.open_timer_window
+        )
         button_to_timer.pack(fill='x', padx=30, pady=20)
         
-        button_to_calendar = tk.Button(self.root,
+        button_to_calendar = tk.Button(
+            self.root,
             text='Calendar',
             fg="#011638", 
             bg="#E8C1C5",
@@ -329,7 +389,8 @@ class TimerApp():
             pady= 12,
             padx= 50,
             font=("Ariel", 40 , 'bold'),
-            command=self.open_calendar_window)
+            command=self.open_calendar_window
+        )
         button_to_calendar.pack(fill='x', padx=30, pady=20)
 
         self.root.mainloop()
