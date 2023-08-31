@@ -1,5 +1,6 @@
 
-# TODO poprawic wyświetlanie się akywności pod kalendarzem (open_calendar_window -> print_action)
+# TODO opis wybranej aktywności wybranej z kalendarza
+# ! sprawdzić co sie stanie jeśli wrzucimy dwie aktywnosci w jeden przeciał czasowy w grid content
 # TODO obszar podsumowania zliczający wszystkie aktywności dla każdego szablonu
 # TODO obszar zmiany koloru danej aktywności
 # TODO w kalendarzu dodać przesyłanie do google calendar (pomyśleć jak połączyc różne sesje, jak je zapisać w lokalnym kalenadarzu, przy dodawaniu podać nazwe, opis itp)
@@ -60,6 +61,7 @@ class TimerApp():
         timer_window = tk.Tk()
         timer_window.title("Timer")
         timer_window.geometry("300x150" + self.window_shift)
+        timer_window.resizable(False, False)
         timer_window.config(bg="#011638")
         
         #* MAIN TIMER
@@ -153,6 +155,7 @@ class TimerApp():
             Saves data to csv and destroys window
             """
             picked_activity = activity_cbox.get().upper() if activity_cbox.get() else 'SOMETHING'
+            
             #| If picked activity isn't in activity.csv, takes inputs about bgcolor and fgcolor then append to activity db [name,bg,fg]
             if not picked_activity in activity_values: 
                 bg_color = askcolor(
@@ -185,6 +188,7 @@ class TimerApp():
         save_window = tk.Tk()
         save_window.title("Save your time")
         save_window.geometry("400x400" + self.window_shift)
+        save_window.resizable(False, False)
         save_window.config(bg="#011638")
         
         #* TIME FRAME
@@ -276,17 +280,17 @@ class TimerApp():
         def grab_date_loop():
             """
             Loop
-            Grabs date from calendar, call print_actions func
+            Grabs date from calendar, call print_data func
             """
             if self.picked_date != cal.get_date():
                 self.picked_date = cal.get_date()
                 content_title.config(text=cal.get_date())
-                print_actions()
+                print_data()
             self.loop_id = cal_window.after(100,grab_date_loop)
             
-        def print_actions():
+        def print_data():
             """
-            Prints actions from picked date in content frame
+            Prints grid with timestaps and actions from picked date 
             """
             actions = self.data[self.data['date'] == self.picked_date]        
             
@@ -294,31 +298,73 @@ class TimerApp():
             for widget in content.winfo_children(): 
                 widget.destroy()
             
-            #| Prints data
+            #| Sets a minimum height for each row
+            for i in range(96):
+                content.grid_rowconfigure(i, minsize=20)
+
+            #| Sets the minimum width for the first column and the width of the second column to all available space
+            content.grid_columnconfigure(0, minsize=50)
+            content.grid_columnconfigure(1, weight=1)
+
+            #| Adds times and black line above in first column
+            t = 0
+            for i in range(96):
+                if i % 4 == 3:
+                    frame = tk.Frame(content, highlightbackground="black", highlightthickness=1, width=50, height=1)
+                    frame.grid(row=i, column=0, sticky='s')
+                elif not i % 4:
+                    lab = tk.Label(content, text=f"{t}:00")
+                    lab.grid(row=i, column=0)
+                    t += 1
+                    
+            #| Adds buttons to seccond column. Each button represent action (the longer the activity, the bigger the button)
             for action in actions.values.tolist():
-                action_frame = tk.Frame(content, background='#FFFF00')
-                action_frame.pack()
-                title = tk.Label(
-                    action_frame,
-                    text=f"{action[1]} {action[5]}"
+                start_time = [int(x) for x in action[1].split(':')]
+                start_time = ((start_time[0] * 60) + start_time[1] + (1 if start_time[2] else 0)) // 15
+                # start_time = int(((start_time[0] * 3600) + (start_time[1] * 60) + start_time[2]) / 60)
+                duration = int(((action[2] + action[3]) / 60) // 15) 
+                activity = [activity for activity in activites if activity[0] == action[5]][0]
+                
+                button = tk.Button(
+                    content,
+                    font =('Ariel', 15),
+                    background = activity[1],
+                    foreground = activity[2],
+                    command = lambda x = [action, activity]: on_button_click(x),
+                    text = f"{action[5]}"
                 )
-                title.pack()
-                time_spent = tk.Label(
-                    action_frame,
-                    text=f"{action[2]} {action[3]}"
-                )
-                time_spent.pack()
-                desc = tk.Label(
-                    action_frame,
-                    text=f"{action[4]}"
-                )
-                desc.pack()
+                
+                #| Rowspan value must be positive integer
+                if duration: 
+                    button.grid(
+                        column = 1,
+                        row = start_time,
+                        rowspan = duration,
+                        sticky='nwes'
+                    )
+                else:
+                        button.grid(
+                        column = 1,
+                        row = start_time,
+                        sticky='nwes'
+                    )
+                        
+        def on_button_click(arg: list[list, list]):
+            """
+            Opens new window with picked action data
+            """
+            print(arg)
+            action, activity = arg
+            action_window = tk.Toplevel(cal_window)
+            action_window.title(action[5])
+            action_window.geometry(self.window_shift)
+            action_window.config(bg=activity[1])
             
         self.root.destroy()
         cal_window = tk.Tk()
         cal_window.title("Calendar")
-        cal_window.geometry("400x400" + self.window_shift)
-        cal_window.config(bg="#011638")
+        cal_window.geometry("400x500" + self.window_shift)
+        cal_window.resizable(False, False)
         self.picked_date = ''
         
         today = datetime.now()
@@ -339,15 +385,47 @@ class TimerApp():
         for activity in activites:
             cal.tag_config(activity[0], background=activity[1], foreground=activity[2])
 
-        cal.pack(pady=20)
+        cal.pack(pady=(20,5))
         
         #* CONTENT
-        #| show data drom data.db content is updated by print_actions (func is called in grab_date func)
-        content_title = tk.Label(cal_window, text="")
-        content_title.pack(pady=20)
         
-        content = tk.Frame(cal_window)
-        content.pack()
+        content_title = tk.Label(
+            cal_window,
+            font=("Ariel",15),
+            # foreground="#E8C1C5", 
+            # background="#011638",
+            text=""
+        )
+        content_title.pack(pady=(0,5))
+        
+        ## canvas_container <- canvas <- content[grid]
+        canvas_container = tk.Frame(cal_window)
+        canvas_container.pack(fill='both')
+        
+        #| canvas contains scrollable content
+        canvas = tk.Canvas(canvas_container)
+        content = tk.Frame(canvas)
+        scrollbar = tk.Scrollbar(canvas_container, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        canvas_frame = canvas.create_window((0, 0), window=content, anchor="nw")
+        
+        #| Links scroll with content
+        def on_frame_configure(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+        content.bind("<Configure>", on_frame_configure)
+        
+        #| Changes width of canvas
+        def frame_width(event):
+            canvas_width = event.width
+            canvas.itemconfig(canvas_frame, width = canvas_width)
+        canvas.bind('<Configure>', frame_width)
+        
+        def on_mousewheel(event):
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        canvas.bind_all("<MouseWheel>", on_mousewheel)
         
         #* LOOP
         grab_date_loop()
@@ -362,7 +440,8 @@ class TimerApp():
         self.root = tk.Tk()
         self.root.title("TimerApp")
         self.root.config(bg="#011638")
-        # icon = tk.PhotoImage(file="timer-icon.png")
+        self.root.resizable(False, False)
+        # icon = tk.PhotoImage(file="timer-icon.png") #! Does raise error after 1 call, try to throw this line to __init__
         # self.root.iconphoto(True,icon)
         self.window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 3}"
         self.root.geometry(self.window_shift)
