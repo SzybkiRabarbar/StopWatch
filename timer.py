@@ -316,7 +316,7 @@ class TimerApp():
                     lab = tk.Label(content, text=f"{t}:00")
                     lab.grid(row=i, column=0)
                     t += 1
-                    
+            
             #| Adds buttons to seccond column. Each button represent action (the longer the activity, the bigger the button)
             for action in actions.values.tolist():
                 start_time = [int(x) for x in action[1].split(':')]
@@ -327,15 +327,16 @@ class TimerApp():
                 
                 button = tk.Button(
                     content,
-                    font =('Ariel', 15),
+                    font=('Ariel', 1),
+                    text='', 
                     background = activity[1],
                     foreground = activity[2],
-                    command = lambda x = [action, activity]: on_button_click(x),
-                    text = f"{action[5]}"
+                    command = lambda x = [action, activity]: on_button_click(x)
                 )
                 
                 #| Rowspan value must be positive integer
                 if duration: 
+                    button.configure(font =('Ariel', 15), text=f"{action[5]}")
                     button.grid(
                         column = 1,
                         row = start_time,
@@ -343,11 +344,15 @@ class TimerApp():
                         sticky='nwes'
                     )
                 else:
-                        button.grid(
+                    button.grid(
                         column = 1,
                         row = start_time,
                         sticky='nwes'
                     )
+                
+                if t == 95:
+                    canvas.yview_moveto(str(float(start_time / 95)))
+                    t += 1
                         
         def on_button_click(arg: list[list, list]):
             """
@@ -359,6 +364,16 @@ class TimerApp():
             action_window.title(action[5])
             action_window.geometry(self.window_shift)
             action_window.config(bg=activity[1])
+            tk.Label(
+                action_window,
+                font=('Ariel', 15),
+                text=
+                f"{action[5]}\n"
+                f"{action[1]}\n"
+                f"{action[2] // 3600}:{(action[2] % 3600) // 60 :02d}:{(action[2] % 3600) % 60 :02d}\n"
+                f"{action[3] // 3600}:{(action[3] % 3600) // 60 :02d}:{(action[3] % 3600) % 60 :02d}\n"
+                f"{action[4].strip()}"
+            ).pack()
             
         self.root.destroy()
         cal_window = tk.Tk()
@@ -426,6 +441,8 @@ class TimerApp():
         def on_mousewheel(event):
             canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
         canvas.bind_all("<MouseWheel>", on_mousewheel)
+        
+        cal_window.update_idletasks()
         
         #* LOOP
         grab_date_loop()
