@@ -1,7 +1,11 @@
 
-# TODO opis wybranej aktywności wybranej z kalendarza
+# ! dodać metode sprawdzajaca czy bazy są a jak nie to je dodać is_fiels
+# TODO kontynuwaowac get_summary
+    # * zmiana koloru
+    # * summary (np średnie czasów, sumy czasów)
 # ! sprawdzić co sie stanie jeśli wrzucimy dwie aktywnosci w jeden przeciał czasowy w grid content
 # TODO obszar podsumowania zliczający wszystkie aktywności dla każdego szablonu
+# TODO poprawić podsumowanie konkretnej aktywności w kalendarzu
 # TODO obszar zmiany koloru danej aktywności
 # TODO w kalendarzu dodać przesyłanie do google calendar (pomyśleć jak połączyc różne sesje, jak je zapisać w lokalnym kalenadarzu, przy dodawaniu podać nazwe, opis itp)
 # TODO sprawdzić zmiane domyślnego paska
@@ -20,6 +24,13 @@ class TimerApp():
     
     def __init__(self) -> None:
         self.time_reset()
+        self.is_files()
+        self.icon = False
+    
+    def is_files(self): # TODO =========================
+        pass
+        # if not exists('data.csv'):
+            
     
     def time_reset(self) -> None:
         self.main_time = False
@@ -292,6 +303,11 @@ class TimerApp():
             """
             Prints grid with timestaps and actions from picked date 
             """
+            def debug():
+                print(action)
+                print(start_time)
+                print(duration)
+                
             actions = self.data[self.data['date'] == self.picked_date]        
             
             #| Deletes data from previos picked day
@@ -316,7 +332,7 @@ class TimerApp():
                     lab = tk.Label(content, text=f"{t}:00")
                     lab.grid(row=i, column=0)
                     t += 1
-            
+                    
             #| Adds buttons to seccond column. Each button represent action (the longer the activity, the bigger the button)
             for action in actions.values.tolist():
                 start_time = [int(x) for x in action[1].split(':')]
@@ -324,7 +340,7 @@ class TimerApp():
                 # start_time = int(((start_time[0] * 3600) + (start_time[1] * 60) + start_time[2]) / 60)
                 duration = int(((action[2] + action[3]) / 60) // 15) 
                 activity = [activity for activity in activites if activity[0] == action[5]][0]
-                
+                # debug()
                 button = tk.Button(
                     content,
                     font=('Ariel', 1),
@@ -340,7 +356,7 @@ class TimerApp():
                     button.grid(
                         column = 1,
                         row = start_time,
-                        rowspan = duration,
+                        rowspan = duration + 1,
                         sticky='nwes'
                     )
                 else:
@@ -350,8 +366,9 @@ class TimerApp():
                         sticky='nwes'
                     )
                 
-                if t == 95:
-                    canvas.yview_moveto(str(float(start_time / 95)))
+                #| Moves scrollbar to first action
+                if t == 24:
+                    canvas.yview_moveto(str(float((start_time // 4) / 24)))
                     t += 1
                         
         def on_button_click(arg: list[list, list]):
@@ -367,13 +384,13 @@ class TimerApp():
             tk.Label(
                 action_window,
                 font=('Ariel', 15),
+                wraplength=400,
                 text=
                 f"{action[5]}\n"
-                f"{action[1]}\n"
                 f"{action[2] // 3600}:{(action[2] % 3600) // 60 :02d}:{(action[2] % 3600) % 60 :02d}\n"
                 f"{action[3] // 3600}:{(action[3] % 3600) // 60 :02d}:{(action[3] % 3600) % 60 :02d}\n"
                 f"{action[4].strip()}"
-            ).pack()
+            ).pack(padx=20,pady=20)
             
         self.root.destroy()
         cal_window = tk.Tk()
@@ -407,8 +424,6 @@ class TimerApp():
         content_title = tk.Label(
             cal_window,
             font=("Ariel",15),
-            # foreground="#E8C1C5", 
-            # background="#011638",
             text=""
         )
         content_title.pack(pady=(0,5))
@@ -449,7 +464,72 @@ class TimerApp():
         
         #| Instructions that are executed after the program closes
         cal_window.protocol("WM_DELETE_WINDOW", lambda: [cal_window.after_cancel(self.loop_id), cal_window.destroy(), self.open_main_window()])
+    
+    def open_summary_window(self):
         
+        def clear():
+            for widget in content.winfo_children(): 
+                widget.destroy()
+        
+        def exit():
+            summ_window.destroy()
+            self.open_main_window()
+        
+        def buttons_generator():
+            clear()
+            for i, (action, bg_color, fg_color) in enumerate(df_action.values.tolist()):
+                tk.Button(
+                    content,
+                    font=('Ariel', 20),
+                    background=bg_color,
+                    foreground=fg_color,
+                    activebackground=fg_color,
+                    activeforeground=bg_color,
+                    text=f"{action}",
+                    command=lambda x = action: generate_summary(x)
+                ).grid(row=i, sticky='nsew')
+        
+        def generate_summary(action: str):
+            clear()
+            tk.Label(content, text=f"{action}").pack()
+        
+        self.root.destroy()
+        summ_window = tk.Tk()
+        summ_window.title("Summary")
+        summ_window.config(bg='red')
+        summ_window.attributes('-fullscreen', True)
+        
+        #| Takes data from DBs
+        df_data = pd.read_csv('data.csv')
+        df_action = pd.read_csv('activity.csv')
+        
+        top_bar = tk.Frame(summ_window)
+        top_bar.pack(fill='x')
+        
+        tk.Button(
+            top_bar,
+            text="Summary",
+            command=buttons_generator
+        ).pack(side='left')
+        
+        tk.Button(
+            top_bar,
+            text='Exit',
+            command=exit
+        ).pack(side='right')
+        
+        
+        content = tk.Frame(summ_window, background='#011638')
+        content.columnconfigure(0, weight=1)
+        for i in range(df_action.shape[0]): 
+            content.rowconfigure(i, weight=1, uniform='group1')
+        content.pack(fill='both', expand=True)
+        
+        buttons_generator()
+        
+        #| Instructions that are executed after the program closes
+        summ_window.protocol("WM_DELETE_WINDOW", lambda: [summ_window.destroy(), self.open_main_window()])
+    
     def open_main_window(self):
         """
         MENU
@@ -458,8 +538,9 @@ class TimerApp():
         self.root.title("TimerApp")
         self.root.config(bg="#011638")
         self.root.resizable(False, False)
-        # icon = tk.PhotoImage(file="timer-icon.png") #! Does raise error after 1 call, try to throw this line to __init__
-        # self.root.iconphoto(True,icon)
+        if not self.icon:
+            self.icon = tk.PhotoImage(file="timer-icon.png")
+            self.root.iconphoto(True, self.icon)
         self.window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 3}"
         self.root.geometry(self.window_shift)
         
@@ -488,6 +569,19 @@ class TimerApp():
             command=self.open_calendar_window
         )
         button_to_calendar.pack(fill='x', padx=30, pady=20)
+        
+        button_to_summary = tk.Button(
+            self.root,
+            text='Summary',
+            fg="#011638", 
+            bg="#E8C1C5",
+            activebackground="#D499B9",
+            pady= 12,
+            padx= 50,
+            font=("Ariel", 40 , 'bold'),
+            command=self.open_summary_window
+        )
+        button_to_summary.pack(fill='x', padx=30, pady=20)
 
         self.root.mainloop()
     
