@@ -3,6 +3,8 @@
 # TODO kontynuwaowac get_summary
     # * zmiana koloru
     # * summary (np średnie czasów, sumy czasów)
+    # * zmiana nazwy (po przejciu na sql)
+    # * przedzia czasowy
 # ! sprawdzić co sie stanie jeśli wrzucimy dwie aktywnosci w jeden przeciał czasowy w grid content
 # TODO obszar podsumowania zliczający wszystkie aktywności dla każdego szablonu
 # TODO poprawić podsumowanie konkretnej aktywności w kalendarzu
@@ -491,7 +493,85 @@ class TimerApp():
         
         def generate_summary(action: str):
             clear()
-            tk.Label(content, text=f"{action}").pack()
+            
+            name_data = [
+            ['', action],
+            ['Performed:', df_data[df_data['activity'] == action].shape[0]]
+            ]
+            column_names = ['Time', 'Activity', 'Break']
+            description_data = ['Sum', 'Mean', 'Max']
+            main_data = [
+                df_data.loc[df_data['activity'] == action, 'main_time'].sum(),
+                int(df_data.loc[df_data['activity'] == action, 'main_time'].mean()),
+                df_data.loc[df_data['activity'] == action, 'main_time'].max()
+            ]
+            break_data = [
+                df_data.loc[df_data['activity'] == action, 'break_time'].sum(),
+                int(df_data.loc[df_data['activity'] == action, 'break_time'].mean()),
+                df_data.loc[df_data['activity'] == action, 'break_time'].max()
+            ] 
+            
+            up_data_grid = tk.Frame(content)
+            up_data_grid.config(background="#011638")
+            up_data_grid.pack()
+            
+            style = ttk.Style()
+            style.configure(
+                "BW.TLabel",
+                font=("Ariel",15),
+                foreground="#E8C1C5", 
+                background="#011638"
+            )
+            for i, (name, value) in enumerate(name_data):
+                ttk.Label(
+                    up_data_grid,
+                    text=f"{name} {value} ",
+                    style="BW.TLabel"
+                ).grid(column=0, columnspan=3, row=i)
+            
+            for i, name in enumerate(column_names):
+                ttk.Label(
+                    up_data_grid,
+                    text=name,
+                    style="BW.TLabel"
+                ).grid(column=i, row=2, sticky='w', padx=30)
+            
+            for c_id, d in enumerate([description_data, main_data, break_data]):
+                for i, value in enumerate(d):
+                    txt = f"{value // 3600}:{value // 60 % 60 :02d}:{value % 60 :02d}" if c_id else f"{value}"
+                    ttk.Label(
+                        up_data_grid,
+                        text=txt,
+                        style="BW.TLabel"
+                    ).grid(column=c_id, row=3+i, sticky='w', padx=30)
+            
+            tk.Frame(
+                content,
+                background='#E8C1C5',
+                bd=0,
+                height=1
+            ).pack(fill='x', pady=20)
+            
+            def change_color(action):
+                print('color',action)
+            
+            tk.Button(
+                content,
+                font=("Ariel",15),
+                foreground="#E8C1C5", 
+                background="#011638",
+                activebackground="#E8C1C5",
+                activeforeground="#011638",
+                text="Change Color",
+                command=lambda x=action: change_color(x)
+            ).pack()
+            
+            tk.Frame(
+                content,
+                background='#E8C1C5',
+                bd=0,
+                height=1
+            ).pack(fill='x', pady=20)
         
         self.root.destroy()
         summ_window = tk.Tk()
@@ -584,8 +664,7 @@ class TimerApp():
         button_to_summary.pack(fill='x', padx=30, pady=20)
 
         self.root.mainloop()
-    
-            
+     
 if __name__=="__main__":
     t = TimerApp()
     t.open_main_window()
