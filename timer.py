@@ -18,6 +18,7 @@ from tkinter.colorchooser import askcolor
 import tkcalendar as tkc
 from datetime import datetime
 import pandas as pd
+from sqlite3 import connect
 from os.path import exists
 from ctypes import windll
 
@@ -31,14 +32,17 @@ class TimerApp():
 
     def __init__(self) -> None:
         self.time_reset()
-        self.is_files()
+        self.conn = connect('sqlite.db')
         self.custom_title_bar()
     
     def after_init(self):
         self.window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 3}"
         self.root.resizable(False, False)
         self.open_main_window()
-        
+    
+    def close_conn(self):
+        self.conn.close()
+    
     def clear_window(self):
         for widget in self.window.winfo_children(): 
                 widget.destroy()
@@ -228,10 +232,6 @@ class TimerApp():
         self.after_init()
         
         self.root.mainloop()
-        
-    def is_files(self): # TODO =========================
-        pass
-        # if not exists('data.csv'):
             
     def time_reset(self) -> None:
         self.main_time = False
@@ -274,11 +274,23 @@ class TimerApp():
         # timer_window.resizable(False, False)
         self.window.config(bg=TimerApp.BGCOLOR)
         
-        #* MAIN TIMER
         #| main_time stores the time (in sec)
         self.main_time = tk.IntVar(value=0)
         #| main_timer stores formated main_time (H:M:S)
         self.main_timer = tk.StringVar()
+        #| is_running indicates wich time should be updated (main_time or break_time)
+        is_running = tk.IntVar(value=1)
+        #| button_text stores STOP or START
+        button_text = tk.StringVar(value="STOP")
+        #| break_time stores the time of summ of breaks (in sec)
+        self.break_time = tk.IntVar(value=0)
+        #| break_timer stores formated break_time (H:M:S)
+        self.break_timer = tk.StringVar()
+        #| current_break_time stores the time of current break (in sec)
+        self.current_break_time = tk.IntVar(value=0)
+        #| current_break_timer stores formated current_break_time (H:M:S)
+        self.current_break_timer = tk.StringVar()
+        
         tk.Label(
             self.window, 
             font=("Ariel",40),
@@ -288,15 +300,12 @@ class TimerApp():
             textvariable=self.main_timer
         ).pack()
 
-        #* BUTTONS
+        #| Contains buttons
         button_container = tk.Frame(self.window)
         button_container.config(background=TimerApp.BGCOLOR)
         button_container.pack()
         
-        #| Button indicates wich time should be updated (main_time or break_time)
-        #| changes is_running bool var with is used in time_loop func
-        is_running = tk.IntVar(value=1)
-        button_text = tk.StringVar(value="STOP")
+        #| Indicades witch timer shoud run
         tk.Checkbutton( # TODO ogarnąć kolory
             button_container, 
             font=("Ariel",15),
@@ -315,10 +324,10 @@ class TimerApp():
             fg=TimerApp.FGCOLOR,
             bg=TimerApp.BGCOLOR,
             text='Exit',
-            command=self.open_save_window #lambda: [self.window.after_cancel(self.loop_id), self.open_save_window]
+            command=self.open_save_window
         ).pack(side='right', padx=5)
         
-        #* BREAKS TIMERS 
+        #| Contains break timers
         break_frame = tk.Frame(self.window)
         break_frame.pack()
 
@@ -331,10 +340,6 @@ class TimerApp():
             background=TimerApp.BGCOLOR
         )
 
-        #| break_time stores the time (in sec)
-        self.break_time = tk.IntVar(value=0)
-        #| break_timer stores formated break_time (H:M:S)
-        self.break_timer = tk.StringVar()
         #| Break label
         ttk.Label(
             break_frame,
@@ -342,16 +347,13 @@ class TimerApp():
             textvariable=self.break_timer
         ).pack(side="left")
 
+        #| Small Separator
         ttk.Label(
             break_frame,
             style="BW.TLabel",
             text="|"
         ).pack(side="left")
 
-        #| current_break_time stores the time (in sec)
-        self.current_break_time = tk.IntVar(value=0)
-        #| current_break_timer stores formated current_break_time (H:M:S)
-        self.current_break_timer = tk.StringVar()
         #| Current break label
         ttk.Label(
             break_frame,
@@ -366,14 +368,14 @@ class TimerApp():
         """
         Show a window with times in session, field to enter desc and to pick activity, saves data in csv
         """
-        def save_to_csv_and_quit():
+        def save_and_quit():
             """
-            Saves data to csv and destroys window
+            Saves data and destroys window
             """
-            picked_activity = activity_cbox.get().upper() if activity_cbox.get() else 'SOMETHING'
+            picked_activity = activities_cbox.get().upper() if activities_cbox.get() else 'SOMETHING'
             
-            #| If picked activity isn't in activity.csv, takes inputs about bgcolor and fgcolor then append to activity db [name,bg,fg]
-            if not picked_activity in activity_values: 
+            #| If picked activity isn't in activities, takes inputs about bgcolor and fgcolor then append to activities db [name,bg,fg]
+            if not picked_activity in activities_values: 
                 bg_color = askcolor(
                     title=f"Choose backgroud color for {picked_activity}",
                     color='pink'
@@ -387,7 +389,7 @@ class TimerApp():
                     'bg': [bg_color if bg_color else '#000000'],
                     'fg': [fg_color if fg_color else '#ffffff']
                 })
-                activity_df.to_csv('activity.csv', index=False, mode='a', header=False)
+                activity_df.to_sql('activities', self.conn, if_exists='append', index=False)
                 
             df = pd.DataFrame({
                 'date': [self.start_time.strftime('%Y-%m-%d')],
@@ -395,21 +397,18 @@ class TimerApp():
                 'main_time': [self.main_time.get()],
                 'break_time': [self.break_time.get()],
                 'desc': [text_widget.get('1.0', tk.END).strip()],
-                'activity': [picked_activity]
+                'activity': [pd.read_sql_query(f'SELECT id FROM activities WHERE "name" == "{picked_activity}"', self.conn).iloc[0, 0]]
             })
-            df.to_csv('data.csv',index=False, mode='a', header=not exists('data.csv'))
+            df.to_sql('data', self.conn, if_exists='append',index=False)
             save_window.destroy()
             self.open_main_window()
         
-        # self.clear_window()
-        # self.root.geometry("400x500" + self.window_shift)
-        # self.window.config(bg=TimerApp.BGCOLOR)
         self.window.after_cancel(self.loop_id)
         save_window = tk.Toplevel(self.root)
         save_window.title("Save Your Progres")
         save_window.geometry("320x385" + self.window_shift)
         
-        #* TIME FRAME
+        #| TIME FRAME
         #| Contains main_timer, break_timer from session and static text
         time_frame = tk.Frame(save_window)
         time_frame.config(background=TimerApp.BGCOLOR)
@@ -449,7 +448,7 @@ class TimerApp():
             text=self.break_timer.get()
         ).pack()
         
-        #* TEXT WIDGET
+        #| TEXT WIDGET
         #| Takes desc
         text_widget = tk.Text(
             save_window,
@@ -463,26 +462,25 @@ class TimerApp():
         )
         text_widget.pack()
         
-        #* BOTTOM FRAME
+        #| BOTTOM FRAME
         #| Contains save_button and activity combobox
         bottom = tk.Frame(save_window)
         bottom.pack()
         
-        #| Run save_to_csv_and_quit func
-        save_button = tk.Button(
+        #| Run save_and_quit func
+        tk.Button(
             bottom,
             text="Save",
-            command=save_to_csv_and_quit
-        )
-        save_button.pack(side='left', padx=(0,10))
+            command=save_and_quit
+        ).pack(side='left', padx=(0,10))
         
         #| ComboBox to pick activity
-        activity_values = [x[0] for x in pd.read_csv('activity.csv').values.tolist()]
-        activity_cbox = ttk.Combobox(
+        activities_values = pd.read_sql_query('SELECT name FROM "activities"', self.conn)['name'].tolist()
+        activities_cbox = ttk.Combobox(
             bottom,
-            values=activity_values
+            values=activities_values
         )
-        activity_cbox.pack(side='right')
+        activities_cbox.pack(side='right')
         
         #| Instructions that are executed after the program closes
         save_window.protocol("WM_DELETE_WINDOW", lambda: [save_window.destroy(), self.open_main_window()])
@@ -505,13 +503,8 @@ class TimerApp():
         def print_data():
             """
             Prints grid with timestaps and actions from picked date 
-            """
-            def debug():
-                print(action)
-                print(start_time)
-                print(duration)
-                
-            actions = self.data[self.data['date'] == self.picked_date]        
+            """        
+            actions = df_data[df_data['date'] == self.picked_date] 
             
             #| Deletes data from previos picked day
             for widget in content.winfo_children(): 
@@ -525,7 +518,7 @@ class TimerApp():
             content.grid_columnconfigure(0, minsize=50)
             content.grid_columnconfigure(1, weight=1)
 
-            #| Adds times and black line above in first column
+            #| Adds hours and black line above in first column
             t = 0
             for i in range(96):
                 if i % 4 == 3:
@@ -536,14 +529,14 @@ class TimerApp():
                     separator.grid(row=i, column=0)
                     t += 1
                     
-            #| Adds buttons to seccond column. Each button represent action (the longer the activity, the bigger the button)
+            #| Adds buttons to seccond column. Each button represent action (the longer the activity, the bigger the button), button trigger on_click()
             for action in actions.values.tolist():
                 start_time = [int(x) for x in action[1].split(':')]
                 start_time = ((start_time[0] * 60) + start_time[1] + (1 if start_time[2] else 0)) // 15
-                # start_time = int(((start_time[0] * 3600) + (start_time[1] * 60) + start_time[2]) / 60)
+                
                 duration = int(((action[2] + action[3]) / 60) // 15) 
                 activity = [activity for activity in activites if activity[0] == action[5]][0]
-                # debug()
+                
                 button = tk.Button(
                     content,
                     font=('Ariel', 1),
@@ -574,13 +567,13 @@ class TimerApp():
                     canvas.yview_moveto(str(float((start_time // 4) / 24)))
                     t += 1
                         
-        def on_button_click(arg: list[list, list]):
+        def on_button_click(arg: list[list, list]): # TODO zmienić na metode i użyć też w summary
             """
             Opens new window with picked action data
             """
             print(arg)
             action, activity = arg
-            action_window = tk.Toplevel(self.window)
+            action_window = tk.Toplevel(self.root)
             action_window.title(action[5])
             action_window.geometry(self.window_shift)
             action_window.config(bg=activity[1])
@@ -597,30 +590,32 @@ class TimerApp():
             
         self.clear_window()
         self.root.geometry("400x500" + self.window_shift)
-        # cal_window.resizable(False, False)
         self.picked_date = ''
         
         today = datetime.now()
-        y = today.year
-        m = today.month
-        d = today.day
+        y, m, d = today.year, today.month, today.day
 
-        #* CALENDAR
+        #| CALENDAR
         #| creates calendar with events
         cal = tkc.Calendar(self.window, selectmode='day', year=y, month=m, day=d, date_pattern='y-mm-dd')
         
-        self.data = pd.read_csv('data.csv')
-        for action in self.data.values.tolist():
+        df_data = pd.read_sql_query(
+            'SELECT data.date, data.start_time, data.main_time, data.break_time, data.desc, activities.name '
+            'FROM data '
+            'JOIN activities ON data.activity = activities.id',
+            self.conn)
+        
+        for action in df_data.values.tolist():
             date = datetime.strptime(action[0], '%Y-%m-%d')
             cal.calevent_create(date, action[4], action[5])
         
-        activites = pd.read_csv('activity.csv').values.tolist()
+        activites = pd.read_sql_query('SELECT name, bg, fg FROM activities', self.conn).values.tolist()
+        
         for activity in activites:
             cal.tag_config(activity[0], background=activity[1], foreground=activity[2])
-
         cal.pack(pady=(20,5))
         
-        #* CONTENT
+        #| CONTENT
         
         content_title = tk.Label(
             self.window,
@@ -631,11 +626,11 @@ class TimerApp():
         )
         content_title.pack(pady=(0,5))
         
-        ## canvas_container <- canvas <- content[grid]
+        #| Stores canvas
         canvas_container = tk.Frame(self.window)
         canvas_container.pack(fill='both')
         
-        #| canvas contains scrollable content
+        #| Canvas contains scrollable content
         canvas = tk.Canvas(canvas_container)
         content = tk.Frame(canvas)
         scrollbar = tk.Scrollbar(canvas_container, orient="vertical", command=canvas.yview)
@@ -656,6 +651,7 @@ class TimerApp():
             canvas.itemconfig(canvas_frame, width = canvas_width)
         canvas.bind('<Configure>', frame_width)
         
+        #| Enables mousewheel
         def on_mousewheel(event):
             canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
         canvas.bind_all("<MouseWheel>", on_mousewheel)
@@ -693,6 +689,17 @@ class TimerApp():
             Draws a summary for the selected activity
             """
             clear()
+            
+            #* HEEDER BUTTON
+            #| Calls buttons_generator
+            top_bar = tk.Frame(content)
+            top_bar.pack(fill='x')
+            tk.Button(
+                top_bar,
+                font='calibri',
+                text="↺",
+                command=buttons_generator
+            ).pack(fill='both', expand=True)
             
             #* TOP
             #| Summary of picked action
@@ -767,8 +774,8 @@ class TimerApp():
             
             #* MIDDLE
             
-            def change_color(action):
-                print('color',action)
+            def change_color(activity):
+                print('color',activity)
             
             tk.Button(
                 content,
@@ -812,6 +819,7 @@ class TimerApp():
                 canvas.itemconfigure(canvas_frame, width=event.width)
             canvas.bind("<Configure>", onCanvasConfigure)
             
+            #| Generates lalels with data
             for i, row in enumerate(df_data[df_data['activity'] == activity].values.tolist()):
                 tk.Label(
                     inner_frame,
@@ -822,18 +830,13 @@ class TimerApp():
         self.root.geometry(f"{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}+0+0")
         
         #| Takes data from DBs
-        df_data = pd.read_csv('data.csv')
-        df_activity = pd.read_csv('activity.csv')
+        df_data = pd.read_sql_query(
+            'SELECT data.date, data.start_time, data.main_time, data.break_time, data.desc, activities.name AS activity '
+            'FROM data '
+            'JOIN activities ON data.activity = activities.id',
+            self.conn)
         
-        top_bar = tk.Frame(self.window)
-        top_bar.pack(fill='x')
-        
-        tk.Button(
-            top_bar,
-            font='calibri',
-            text="↺",
-            command=buttons_generator
-        ).pack(fill='both', expand=True)
+        df_activity = pd.read_sql_query('SELECT name, bg, fg FROM activities', self.conn)
                 
         content = tk.Frame(self.window, background=TimerApp.BGCOLOR)
         content.columnconfigure(0, weight=1)
@@ -842,9 +845,6 @@ class TimerApp():
         content.pack(fill='both', expand=True)
         
         buttons_generator()
-        
-        #| Instructions that are executed after the program closes
-        # summ_window.protocol("WM_DELETE_WINDOW", lambda: [summ_window.destroy(), self.open_main_window()])
     
     def open_main_window(self):
         """
@@ -895,3 +895,4 @@ class TimerApp():
 
 if __name__=="__main__":
     t = TimerApp()
+    t.close_conn()
