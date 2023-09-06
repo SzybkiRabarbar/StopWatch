@@ -11,6 +11,7 @@
 # TODO wyświetlanie save_window
 # TODO w kalendarzu dodać przesyłanie do google calendar (pomyśleć jak połączyc różne sesje, jak je zapisać w lokalnym kalenadarzu, przy dodawaniu podać nazwe, opis itp)
 # TODO sprawdzić czy jest możliwość inplementacji animacji
+# TODO poprawić nachodzenie canvas/innerframe na scrolla w summary
 
 import tkinter as tk
 from tkinter import ttk
@@ -543,7 +544,7 @@ class TimerApp():
                     text='', 
                     background = activity[1],
                     foreground = activity[2],
-                    command = lambda x = [action, activity]: on_button_click(x)
+                    command = lambda x = [action, activity]: self.open_info_Toplevel(x)
                 )
                 
                 #| Rowspan value must be positive integer
@@ -566,27 +567,6 @@ class TimerApp():
                 if t == 24:
                     canvas.yview_moveto(str(float((start_time // 4) / 24)))
                     t += 1
-                        
-        def on_button_click(arg: list[list, list]): # TODO zmienić na metode i użyć też w summary
-            """
-            Opens new window with picked action data
-            """
-            print(arg)
-            action, activity = arg
-            action_window = tk.Toplevel(self.root)
-            action_window.title(action[5])
-            action_window.geometry(self.window_shift)
-            action_window.config(bg=activity[1])
-            tk.Label(
-                action_window,
-                font=('Ariel', 15),
-                wraplength=400,
-                text=
-                f"{action[5]}\n"
-                f"{action[2] // 3600}:{(action[2] % 3600) // 60 :02d}:{(action[2] % 3600) % 60 :02d}\n"
-                f"{action[3] // 3600}:{(action[3] % 3600) // 60 :02d}:{(action[3] % 3600) % 60 :02d}\n"
-                f"{action[4]}"
-            ).pack(padx=20,pady=20)
             
         self.clear_window()
         self.root.geometry("400x500" + self.window_shift)
@@ -681,15 +661,15 @@ class TimerApp():
                     activebackground=fg_color,
                     activeforeground=bg_color,
                     text=f"{activity}",
-                    command=lambda x = activity: generate_summary(x)
+                    command=lambda x = [activity, bg_color, fg_color]: generate_summary(x)
                 ).grid(row=i, sticky='nsew')
         
-        def generate_summary(activity: str):
+        def generate_summary(arg: list):
             """
             Draws a summary for the selected activity
             """
             clear()
-            
+            activity, bg_color, fg_color = arg
             #* HEEDER BUTTON
             #| Calls buttons_generator
             top_bar = tk.Frame(content)
@@ -800,9 +780,9 @@ class TimerApp():
             outer_frame = tk.Frame(content)
             outer_frame.pack(padx=10, pady=10, fill='both', expand=True)
 
-            canvas = tk.Canvas(outer_frame)
-            inner_frame = tk.Frame(canvas)
-            inner_frame.columnconfigure(0, weight=1)
+            canvas = tk.Canvas(outer_frame, background=bg_color)
+            inner_frame = tk.Frame(canvas, background=bg_color)
+            inner_frame.columnconfigure(1, weight=1)
             scrollbar = tk.Scrollbar(outer_frame, orient="vertical", command=canvas.yview)
 
             canvas.configure(yscrollcommand=scrollbar.set)
@@ -820,11 +800,22 @@ class TimerApp():
             canvas.bind("<Configure>", onCanvasConfigure)
             
             #| Generates lalels with data
+            max_value = df_data[df_data['activity'] == activity]['main_time'].max()
             for i, row in enumerate(df_data[df_data['activity'] == activity].values.tolist()):
-                tk.Label(
+                tk.Button(
                     inner_frame,
-                    text=" | ".join([str(x) for x in row])
-                ).grid(row=i, sticky='we')
+                    font=('Consolas', 15),
+                    text=f"{row[0]} | {row[1].rjust(8)}",
+                    background=fg_color,
+                    foreground=bg_color,
+                    command=lambda x = [row, [activity, bg_color, fg_color]]: self.open_info_Toplevel(x)
+                ).grid(column=0, row=i, sticky='w', padx=10, pady=5)
+                tk.Frame( # max width 1617
+                    inner_frame,
+                    height=30,
+                    width=int(row[2] / max_value * 1617),
+                    background=fg_color
+                ).grid(column=1, row=i, sticky='w', padx=(0,10))
         
         self.clear_window()
         self.root.geometry(f"{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}+0+0")
@@ -845,6 +836,27 @@ class TimerApp():
         content.pack(fill='both', expand=True)
         
         buttons_generator()
+    
+    def open_info_Toplevel(self, arg: list[list, list]): 
+        """
+        Opens new window with picked action data
+        arg: [data.date, data.start_time, data.main_time, data.break_time, data.desc, activities.name] [activities.name, activities.bg, activities.fg]
+        """
+        action, activity = arg
+        action_window = tk.Toplevel(self.root)
+        action_window.title(action[5])
+        action_window.geometry(self.window_shift)
+        action_window.config(bg=activity[1])
+        tk.Label(
+            action_window,
+            font=('Ariel', 15),
+            wraplength=400,
+            text=
+            f"{action[5]}\n"
+            f"{action[2] // 3600}:{(action[2] % 3600) // 60 :02d}:{(action[2] % 3600) % 60 :02d}\n"
+            f"{action[3] // 3600}:{(action[3] % 3600) // 60 :02d}:{(action[3] % 3600) % 60 :02d}\n"
+            f"{action[4]}"
+        ).pack(padx=20,pady=20)
     
     def open_main_window(self):
         """
