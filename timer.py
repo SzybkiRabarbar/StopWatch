@@ -1,6 +1,5 @@
 
 # TODO obszar podsumowania zliczający wszystkie aktywności dla każdego szablonu
-    # * zmiana koloru
     # * zmiana nazwy (po przejciu na sql)
     # * przedzia czasowy
 # TODO w kalendarzu dodać przesyłanie do google calendar (pomyśleć jak połączyc różne sesje, jak je zapisać w lokalnym kalenadarzu, przy dodawaniu podać nazwe, opis itp)
@@ -693,7 +692,7 @@ class TimerApp():
             #| Times Performed
             ttk.Label(
                 up_data_grid,
-                text=f"Performed: {df_data[df_data['activity'] == activity].shape[0]}",
+                text=f"Performed: {self.df_data[self.df_data['activity'] == activity].shape[0]}",
                 style="BW.TLabel"
             ).grid(column=0, columnspan=3, row=1)
             
@@ -713,14 +712,14 @@ class TimerApp():
                 'Sum', 'Mean', 'Max'
             ]
             main_data = [
-                df_data.loc[df_data['activity'] == activity, 'main_time'].sum(),
-                int(df_data.loc[df_data['activity'] == activity, 'main_time'].mean()),
-                df_data.loc[df_data['activity'] == activity, 'main_time'].max()
+                self.df_data.loc[self.df_data['activity'] == activity, 'main_time'].sum(),
+                int(self.df_data.loc[self.df_data['activity'] == activity, 'main_time'].mean()),
+                self.df_data.loc[self.df_data['activity'] == activity, 'main_time'].max()
             ]
             break_data = [
-                df_data.loc[df_data['activity'] == activity, 'break_time'].sum(),
-                int(df_data.loc[df_data['activity'] == activity, 'break_time'].mean()),
-                df_data.loc[df_data['activity'] == activity, 'break_time'].max()
+                self.df_data.loc[self.df_data['activity'] == activity, 'break_time'].sum(),
+                int(self.df_data.loc[self.df_data['activity'] == activity, 'break_time'].mean()),
+                self.df_data.loc[self.df_data['activity'] == activity, 'break_time'].max()
             ] 
             for c_id, d in enumerate([description_data, main_data, break_data]):
                 for i, value in enumerate(d):
@@ -740,6 +739,9 @@ class TimerApp():
             
             #* MIDDLE
             
+            mid_frame = tk.Frame(content, background=TimerApp.BGCOLOR)
+            mid_frame.pack()
+            
             def change_color():
                 new_bg_color = askcolor(title="Background color", color=bg_color)[1]
                 new_fg_color = askcolor(title="Foreground color", color=fg_color)[1]
@@ -758,8 +760,43 @@ class TimerApp():
                 self.df_activity = pd.read_sql_query('SELECT name, bg, fg FROM activities', self.conn)
                 buttons_generator()
             
+            def change_name():
+                def submit_new_name():
+                    conn = connect('sqlite.db')
+                    cursor = conn.cursor()
+                    if new_name.get():
+                        cursor.execute(
+                            f'UPDATE activities SET name = "{new_name.get().upper()}" WHERE name = "{activity}"'
+                        )
+                    conn.commit()
+                    conn.close()
+                    self.df_activity = pd.read_sql_query('SELECT name, bg, fg FROM activities', self.conn)
+                    self.df_data = pd.read_sql_query(
+                        'SELECT data.date, data.start_time, data.main_time, data.break_time, data.desc, activities.name AS activity '
+                        'FROM data '
+                        'JOIN activities ON data.activity = activities.id',
+                        self.conn
+                    )
+                    buttons_generator()
+                change_name_window = tk.Toplevel(mid_frame)
+                change_name_window.title('Change name')
+                new_name = tk.StringVar()
+                new_name.set(activity)
+                tk.Entry(
+                    change_name_window,
+                    font=('Ariel', 15),
+                    textvariable=new_name
+                ).pack()
+                tk.Button(
+                    change_name_window,
+                    font=('Ariel', 15),
+                    text='Change name',
+                    command=submit_new_name
+                ).pack()
+            
+            #| change color
             tk.Button(
-                content,
+                mid_frame,
                 font=("Ariel",15),
                 foreground=TimerApp.FGCOLOR, 
                 background=TimerApp.BGCOLOR,
@@ -767,7 +804,19 @@ class TimerApp():
                 activeforeground=TimerApp.BGCOLOR,
                 text="Change Color",
                 command=change_color
-            ).pack()
+            ).pack(side='left', padx=5)
+            
+            #| change name
+            tk.Button(
+                mid_frame,
+                font=("Ariel",15),
+                foreground=TimerApp.FGCOLOR, 
+                background=TimerApp.BGCOLOR,
+                activebackground=TimerApp.FGCOLOR,
+                activeforeground=TimerApp.BGCOLOR,
+                text="Change Name",
+                command=change_name
+            ).pack(side='left', padx=5)
             
             tk.Frame( #| Separator
                 content,
@@ -801,8 +850,8 @@ class TimerApp():
             canvas.bind("<Configure>", onCanvasConfigure)
             
             #| Generates lalels with data
-            max_value = df_data[df_data['activity'] == activity]['main_time'].max()
-            for i, row in enumerate(df_data[df_data['activity'] == activity].values.tolist()):
+            max_value = self.df_data[self.df_data['activity'] == activity]['main_time'].max()
+            for i, row in enumerate(self.df_data[self.df_data['activity'] == activity].values.tolist()):
                 tk.Button(
                     inner_frame,
                     font=('Consolas', 15),
@@ -822,7 +871,7 @@ class TimerApp():
         self.root.geometry(f"{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}+0+0")
         
         #| Takes data from DBs
-        df_data = pd.read_sql_query(
+        self.df_data = pd.read_sql_query(
             'SELECT data.date, data.start_time, data.main_time, data.break_time, data.desc, activities.name AS activity '
             'FROM data '
             'JOIN activities ON data.activity = activities.id',
