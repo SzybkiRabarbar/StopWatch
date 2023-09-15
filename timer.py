@@ -1,17 +1,21 @@
 
-# TODO obszar podsumowania zliczający wszystkie aktywności dla każdego szablonu
-    # * zmiana nazwy (po przejciu na sql)
-    # * przedzia czasowy
+# TODO infotoplvl
+    # * zmiana desc
+    # * usunięcie 
+    # * zmiana na inną aktywność
+# TODO dark i light mode
 # TODO w kalendarzu dodać przesyłanie do google calendar (pomyśleć jak połączyc różne sesje, jak je zapisać w lokalnym kalenadarzu, przy dodawaniu podać nazwe, opis itp)
 # TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp)
+# TODO pobawic się wielkością guzików w summary
 
 import tkinter as tk
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
 import tkinter.font as tkFont
 import tkcalendar as tkc
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
+# from pandas.tseries.offsets import DateOffset
 from sqlite3 import connect
 from ctypes import windll
 
@@ -26,14 +30,20 @@ class TimerApp():
         self.time_reset()
         self.conn = connect('sqlite.db')
         self.custom_title_bar()
-    
+
     def after_init(self):
         self.window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 3}"
         self.root.resizable(False, False)
         self.open_main_window()
     
-    def close_conn(self):
-        self.conn.close()
+    def fetch_dfs(self):
+        self.df_data = pd.read_sql_query(
+            'SELECT data.date, data.start_time, data.main_time, data.break_time, data.desc, activities.name AS activity '
+            'FROM data '
+            'JOIN activities ON data.activity = activities.id',
+            self.conn)
+        
+        self.df_activity = pd.read_sql_query('SELECT name, bg, fg FROM activities', self.conn)    
     
     def clear_window(self):
         for widget in self.window.winfo_children(): 
@@ -82,18 +92,6 @@ class TimerApp():
             self.root.attributes("-alpha",1) 
             if self.root.minimized == True:
                 self.root.minimized = False                              
-                
-        # def maximize_me():
-        #     if self.root.maximized == False: # if the window was not maximized
-        #         self.root.normal_size = self.root.geometry()
-        #         self.expand_button.config(text=" 🗗 ")
-        #         self.root.geometry(f"{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}+0+0")
-        #         self.root.maximized = not self.root.maximized # now it's maximized
-                
-        #     else: # if the window was maximized
-        #         self.expand_button.config(text=" 🗖 ")
-        #         self.root.geometry(self.root.normal_size)
-        #         self.root.maximized = not self.root.maximized # now it is not maximized
 
         # put a close button on the title bar
         self.close_button = tk.Button(title_bar, text='  ×  ', command=lambda: [self.root.destroy()],bg=TimerApp.BARCOLOR,padx=2,pady=2,font=("calibri", 13),bd=0,fg=TimerApp.FGCOLOR,highlightthickness=0)
@@ -220,9 +218,8 @@ class TimerApp():
         self.root.bind("<FocusIn>",deminimize) # to view the window by clicking on the window icon on the taskbar
         self.root.after(10, lambda: set_appwindow(self.root)) # to see the icon on the task bar
         
-        # tk.Label(self.window,text="Hello :D",bg=TimerApp.DGRAY,fg="#fff").pack(expand=1) # example 
         self.after_init()
-        
+                
         self.root.mainloop()
             
     def time_reset(self) -> None:
@@ -486,7 +483,7 @@ class TimerApp():
             """
             Prints grid with timestaps and actions from picked date 
             """        
-            actions = df_data[df_data['date'] == self.picked_date] 
+            actions = self.df_data[self.df_data['date'] == self.picked_date] 
             
             #| Deletes data from previos picked day
             for widget in content.winfo_children(): 
@@ -560,17 +557,13 @@ class TimerApp():
         #| creates calendar with events
         cal = tkc.Calendar(self.window, selectmode='day', year=y, month=m, day=d, date_pattern='y-mm-dd')
         
-        df_data = pd.read_sql_query(
-            'SELECT data.date, data.start_time, data.main_time, data.break_time, data.desc, activities.name '
-            'FROM data '
-            'JOIN activities ON data.activity = activities.id',
-            self.conn)
+        self.fetch_dfs()
         
-        for action in df_data.values.tolist():
+        for action in self.df_data.values.tolist():
             date = datetime.strptime(action[0], '%Y-%m-%d')
             cal.calevent_create(date, action[4], action[5])
         
-        activites = pd.read_sql_query('SELECT name, bg, fg FROM activities', self.conn).values.tolist()
+        activites = self.df_activity.values.tolist()
         
         for activity in activites:
             cal.tag_config(activity[0], background=activity[1], foreground=activity[2])
@@ -711,16 +704,20 @@ class TimerApp():
             description_data = [
                 'Sum', 'Mean', 'Max'
             ]
-            main_data = [
-                self.df_data.loc[self.df_data['activity'] == activity, 'main_time'].sum(),
-                int(self.df_data.loc[self.df_data['activity'] == activity, 'main_time'].mean()),
-                self.df_data.loc[self.df_data['activity'] == activity, 'main_time'].max()
-            ]
-            break_data = [
-                self.df_data.loc[self.df_data['activity'] == activity, 'break_time'].sum(),
-                int(self.df_data.loc[self.df_data['activity'] == activity, 'break_time'].mean()),
-                self.df_data.loc[self.df_data['activity'] == activity, 'break_time'].max()
-            ] 
+            if not self.df_data.loc[self.df_data['activity'] == activity].shape[0]:
+                main_data = [0,0,0]
+                break_data = [0,0,0]
+            else:
+                main_data = [
+                    self.df_data.loc[self.df_data['activity'] == activity, 'main_time'].sum(),
+                    int(self.df_data.loc[self.df_data['activity'] == activity, 'main_time'].mean()),
+                    self.df_data.loc[self.df_data['activity'] == activity, 'main_time'].max()
+                ]
+                break_data = [
+                    self.df_data.loc[self.df_data['activity'] == activity, 'break_time'].sum(),
+                    int(self.df_data.loc[self.df_data['activity'] == activity, 'break_time'].mean()),
+                    self.df_data.loc[self.df_data['activity'] == activity, 'break_time'].max()
+                ] 
             for c_id, d in enumerate([description_data, main_data, break_data]):
                 for i, value in enumerate(d):
                     txt = f"{value // 3600}:{value // 60 % 60 :02d}:{value % 60 :02d}" if c_id else f"{value}"
@@ -745,8 +742,8 @@ class TimerApp():
             def change_color():
                 new_bg_color = askcolor(title="Background color", color=bg_color)[1]
                 new_fg_color = askcolor(title="Foreground color", color=fg_color)[1]
-                conn = connect('sqlite.db')
-                cursor = conn.cursor()
+                
+                cursor = self.conn.cursor()
                 if new_bg_color:
                     cursor.execute(
                         f'UPDATE activities SET bg = "{new_bg_color}" WHERE name = "{activity}"'
@@ -755,28 +752,19 @@ class TimerApp():
                     cursor.execute(
                         f'UPDATE activities SET fg = "{new_fg_color}" WHERE name = "{activity}"'
                     )
-                conn.commit()
-                conn.close()
-                self.df_activity = pd.read_sql_query('SELECT name, bg, fg FROM activities', self.conn)
+                self.conn.commit()
+                fetch_dfs_with_range()
                 buttons_generator()
             
             def change_name():
                 def submit_new_name():
-                    conn = connect('sqlite.db')
-                    cursor = conn.cursor()
+                    cursor = self.conn.cursor()
                     if new_name.get():
                         cursor.execute(
                             f'UPDATE activities SET name = "{new_name.get().upper()}" WHERE name = "{activity}"'
                         )
-                    conn.commit()
-                    conn.close()
-                    self.df_activity = pd.read_sql_query('SELECT name, bg, fg FROM activities', self.conn)
-                    self.df_data = pd.read_sql_query(
-                        'SELECT data.date, data.start_time, data.main_time, data.break_time, data.desc, activities.name AS activity '
-                        'FROM data '
-                        'JOIN activities ON data.activity = activities.id',
-                        self.conn
-                    )
+                    self.conn.commit()
+                    fetch_dfs_with_range()
                     buttons_generator()
                 change_name_window = tk.Toplevel(mid_frame)
                 change_name_window.title('Change name')
@@ -793,6 +781,11 @@ class TimerApp():
                     text='Change name',
                     command=submit_new_name
                 ).pack()
+            
+            def change_time_range(*args):
+                self.time_range = self.range_optionts.index(picked_range.get())
+                fetch_dfs_with_range()
+                generate_summary(arg)
             
             #| change color
             tk.Button(
@@ -816,7 +809,31 @@ class TimerApp():
                 activeforeground=TimerApp.BGCOLOR,
                 text="Change Name",
                 command=change_name
-            ).pack(side='left', padx=5)
+            ).pack(side='left', padx=5, fill='y')
+            
+            #| change time range
+            picked_range = tk.StringVar(value=self.range_optionts[self.time_range])
+            picked_range.trace('w', change_time_range)
+            range_menu = tk.OptionMenu(
+                mid_frame,
+                picked_range,
+                *self.range_optionts
+            )
+            range_menu.config(
+                font=("Ariel",15),
+                background=TimerApp.BGCOLOR,
+                foreground=TimerApp.FGCOLOR,
+                activebackground=TimerApp.BGCOLOR,
+                activeforeground=TimerApp.FGCOLOR,
+                highlightbackground=TimerApp.BGCOLOR,
+                highlightcolor=TimerApp.BGCOLOR
+            )
+            range_menu['menu'].config(
+                font=("Ariel",10),
+                background=TimerApp.BGCOLOR,
+                foreground=TimerApp.FGCOLOR
+            )
+            range_menu.pack(side='left', padx=5)
             
             tk.Frame( #| Separator
                 content,
@@ -849,7 +866,7 @@ class TimerApp():
                 canvas.itemconfigure(canvas_frame, width=event.width)
             canvas.bind("<Configure>", onCanvasConfigure)
             
-            #| Generates lalels with data
+            #| Generates labels with data
             max_value = self.df_data[self.df_data['activity'] == activity]['main_time'].max()
             for i, row in enumerate(self.df_data[self.df_data['activity'] == activity].values.tolist()):
                 tk.Button(
@@ -867,18 +884,24 @@ class TimerApp():
                     background=fg_color
                 ).grid(column=1, row=i, sticky='w', padx=(0,10))
         
+        def fetch_dfs_with_range():
+            self.fetch_dfs()
+            if self.time_range:
+                offset = [0, 7, 30, 90, 365]
+                self.df_data['date'] = pd.to_datetime(self.df_data['date'])
+                date_off_set = datetime.now() - timedelta(days=offset[self.time_range])
+                self.df_data = self.df_data.loc[self.df_data['date'] >= date_off_set]
+                self.df_data['date'] = self.df_data['date'].dt.date
+            print(self.df_data)
+                
+        
         self.clear_window()
         self.root.geometry(f"{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}+0+0")
         
-        #| Takes data from DBs
-        self.df_data = pd.read_sql_query(
-            'SELECT data.date, data.start_time, data.main_time, data.break_time, data.desc, activities.name AS activity '
-            'FROM data '
-            'JOIN activities ON data.activity = activities.id',
-            self.conn)
+        self.range_optionts = ["Total", "Last 7 days", "Last 30 days", "Last 90 days", "Last Year"]
+        self.time_range = 0
+        fetch_dfs_with_range()
         
-        self.df_activity = pd.read_sql_query('SELECT name, bg, fg FROM activities', self.conn)
-                
         content = tk.Frame(self.window, background=TimerApp.BGCOLOR)
         content.columnconfigure(0, weight=1)
         for i in range(self.df_activity.shape[0]): 
@@ -994,4 +1017,4 @@ class TimerApp():
 
 if __name__=="__main__":
     t = TimerApp()
-    t.close_conn()
+    t.conn.close()
