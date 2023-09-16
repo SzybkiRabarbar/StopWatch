@@ -1,11 +1,8 @@
 
-# TODO infotoplvl
-    # * zmiana desc
-    # * usunięcie 
-    # * zmiana na inną aktywność
 # TODO dark i light mode
 # TODO w kalendarzu dodać przesyłanie do google calendar (pomyśleć jak połączyc różne sesje, jak je zapisać w lokalnym kalenadarzu, przy dodawaniu podać nazwe, opis itp)
 # TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp)
+# TODO dodać usuwanie całej activity (wybór czy usunąc action czy przenieść ją do innego activity)
 # TODO pobawic się wielkością guzików w summary
 # TODO pole z kalendarzem zrobić dłuższe
 
@@ -13,6 +10,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
 import tkinter.font as tkFont
+from tkinter import messagebox
 import tkcalendar as tkc
 from datetime import datetime, timedelta
 import pandas as pd
@@ -43,7 +41,7 @@ class TimerApp():
             'JOIN activities ON data.activity = activities.id',
             self.conn)
         
-        self.df_activity = pd.read_sql_query('SELECT name, bg, fg FROM activities', self.conn)    
+        self.df_activity = pd.read_sql_query('SELECT name, bg, fg, id FROM activities', self.conn)    
     
     def clear_window(self):
         for widget in self.window.winfo_children(): 
@@ -629,7 +627,7 @@ class TimerApp():
             Draws buttons corresponding to each activity, click returns summary
             """
             clear()
-            for i, (activity, bg_color, fg_color) in enumerate(self.df_activity.values.tolist()):
+            for i, (activity, bg_color, fg_color, id) in enumerate(self.df_activity.values.tolist()):
                 tk.Button(
                     content,
                     font=('Ariel', 20),
@@ -638,7 +636,7 @@ class TimerApp():
                     activebackground=fg_color,
                     activeforeground=bg_color,
                     text=f"{activity}",
-                    command=lambda x = [activity, bg_color, fg_color]: generate_summary(x)
+                    command=lambda x = [activity, bg_color, fg_color, id]: generate_summary(x)
                 ).grid(row=i, sticky='nsew')
         
         def generate_summary(arg: list):
@@ -646,7 +644,7 @@ class TimerApp():
             Draws a summary for the selected activity
             """
             clear()
-            activity, bg_color, fg_color = arg
+            activity, bg_color, fg_color, id = arg
             #* HEEDER BUTTON
             #| Calls buttons_generator
             top_bar = tk.Frame(content)
@@ -878,7 +876,7 @@ class TimerApp():
                     text=f"{row[0]} | {row[1].rjust(8)}",
                     background=fg_color,
                     foreground=bg_color,
-                    command=lambda x = [row, [activity, bg_color, fg_color]]: self.open_info_Toplevel(x)
+                    command=lambda x = [row, [activity, bg_color, fg_color, id]]: self.open_info_Toplevel(x)
                 ).grid(column=0, row=i, sticky='w', padx=10, pady=5)
                 tk.Frame( # max width 1617
                     inner_frame,
@@ -917,6 +915,10 @@ class TimerApp():
         Opens new window with picked action data
         arg: [data.date, data.start_time, data.main_time, data.break_time, data.desc, activities.name] [activities.name, activities.bg, activities.fg]
         """
+        def clear():
+            for widget in action_window.winfo_children(): 
+                widget.destroy()
+        
         action, activity = arg
         action_window = tk.Toplevel(self.root)
         action_window.resizable(False, False)
@@ -970,13 +972,118 @@ class TimerApp():
         ).pack()
         
         def change_desc():
-            pass
+            clear()
+            
+            new_desc = tk.Text(
+                action_window,
+                bg="light yellow",
+                font=("Consolas",15),
+                height=10,
+                width=40,
+                padx=5,
+                pady=5
+            )
+            new_desc.pack(padx=10,pady=10)
+            new_desc.insert('1.0', action[4])
+            
+            def save_desc():
+                input_desc = new_desc.get('1.0', 'end-1c')
+                if input_desc != action[4]:
+                    cur = self.conn.cursor()
+                    cur.execute(
+                        f'UPDATE data SET desc = "{input_desc}"'
+                        f'WHERE date = "{action[0]}" AND start_time = "{action[1]}"'
+                    )
+                    self.conn.commit()
+                action_window.destroy()
+                self.open_main_window()
+            
+            button_frame = tk.Frame(action_window, background=activity[1])
+            button_frame.pack()
+            
+            tk.Button(
+                button_frame,
+                font=('Ariel', 10),
+                background=activity[1],
+                foreground=activity[2],
+                activebackground=activity[2],
+                activeforeground=activity[1],
+                text='Save & Quit',
+                command=save_desc
+            ).pack(side='left')
+            
+            tk.Button(
+                button_frame,
+                font=('Ariel', 10),
+                background=activity[1],
+                foreground=activity[2],
+                activebackground=activity[2],
+                activeforeground=activity[1],
+                text='Cancel',
+                command=lambda x = arg: [action_window.destroy(), self.open_info_Toplevel(x)]
+            ).pack(side='left')
         
         def change_activity():
-            pass
-        
+            clear()
+            
+            def save_and_quit():
+                picked_activity = activities_cbox.get().upper()
+                if picked_activity and picked_activity != activity[0]:
+                    if not self.df_activity['name'].isin([picked_activity]).any():
+                        bg_color = askcolor(
+                            title=f"Choose backgroud color for {picked_activity}",
+                            color='pink',
+                            parent=action_window
+                        )[1]
+                        fg_color = askcolor(
+                            title=f"Choose text color for {picked_activity}",
+                            color='blue',
+                            parent=action_window
+                        )[1]
+                        activity_df = pd.DataFrame({
+                            'name': [picked_activity],
+                            'bg': [bg_color if bg_color else '#000000'],
+                            'fg': [fg_color if fg_color else '#ffffff']
+                        })
+                        activity_df.to_sql('activities', self.conn, if_exists='append', index=False)
+                    self.fetch_dfs()
+                    new_id = self.df_activity.loc[self.df_activity['name'] == picked_activity, 'id'].values[0]
+                    curr = self.conn.cursor()
+                    curr.execute(
+                        f'UPDATE data SET activity = "{new_id}" '
+                        f'WHERE date = "{action[0]}" AND start_time = "{action[1]}"'
+                        )
+                    self.conn.commit()
+                action_window.destroy()
+                self.open_main_window()
+            
+            activities_values = self.df_activity['name'].tolist()
+            activities_cbox = ttk.Combobox(
+                action_window,
+                values=activities_values,
+                width=40
+            )
+            activities_cbox.current(activity[3] - 1)
+            activities_cbox.pack(padx=10, pady=10)
+            
+            tk.Button(
+                action_window,
+                text='Save',
+                command=save_and_quit
+            ).pack()
+            
         def delete():
-            pass
+            if messagebox.askyesno("Delete", f"are you sure you want to delete\n'{action[5]}' from {action[0]} {action[1]}", parent=action_window):
+                print('delete')
+                curr = self.conn.cursor()
+                curr.execute(
+                    f'DELETE FROM data '
+                    f'WHERE date = "{action[0]}" AND start_time = "{action[1]}"'
+                )
+                self.conn.commit()
+                action_window.destroy()
+                self.open_main_window()
+                
         
         def google_calendar():
             pass
