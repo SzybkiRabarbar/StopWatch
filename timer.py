@@ -7,6 +7,7 @@
 # TODO w kalendarzu dodać przesyłanie do google calendar (pomyśleć jak połączyc różne sesje, jak je zapisać w lokalnym kalenadarzu, przy dodawaniu podać nazwe, opis itp)
 # TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp)
 # TODO pobawic się wielkością guzików w summary
+# TODO pole z kalendarzem zrobić dłuższe
 
 import tkinter as tk
 from tkinter import ttk
@@ -15,7 +16,6 @@ import tkinter.font as tkFont
 import tkcalendar as tkc
 from datetime import datetime, timedelta
 import pandas as pd
-# from pandas.tseries.offsets import DateOffset
 from sqlite3 import connect
 from ctypes import windll
 
@@ -396,6 +396,9 @@ class TimerApp():
         
         self.window.after_cancel(self.loop_id)
         save_window = tk.Toplevel(self.root)
+        save_window.resizable(False, False)
+        save_window.attributes('-topmost', 'true')
+        save_window.grab_set()
         save_window.title("Save Your Progres")
         save_window.geometry("320x385" + self.window_shift)
         
@@ -892,9 +895,8 @@ class TimerApp():
                 date_off_set = datetime.now() - timedelta(days=offset[self.time_range])
                 self.df_data = self.df_data.loc[self.df_data['date'] >= date_off_set]
                 self.df_data['date'] = self.df_data['date'].dt.date
-            print(self.df_data)
+            # print(self.df_data)
                 
-        
         self.clear_window()
         self.root.geometry(f"{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}+0+0")
         
@@ -917,6 +919,8 @@ class TimerApp():
         """
         action, activity = arg
         action_window = tk.Toplevel(self.root)
+        action_window.resizable(False, False)
+        action_window.attributes('-topmost', 'true')
         action_window.title(action[5])
         action_window.geometry(self.window_shift)
         action_window.config(bg=activity[1])
@@ -964,6 +968,67 @@ class TimerApp():
             f"{action[3] // 3600}:{(action[3] % 3600) // 60 :02d}:{(action[3] % 3600) % 60 :02d}\n"
             f"{action[4]}"
         ).pack()
+        
+        def change_desc():
+            pass
+        
+        def change_activity():
+            pass
+        
+        def delete():
+            pass
+        
+        def google_calendar():
+            pass
+        
+        button_frame = tk.Frame(right_container)
+        button_frame.columnconfigure(0, weight=1)
+        button_frame.columnconfigure(1, weight=1)
+        button_frame.pack(side='bottom', fill='x')
+        
+        tk.Button(
+            button_frame,
+            font=('Ariel', 10),
+            background=activity[1],
+            foreground=activity[2],
+            activebackground=activity[2],
+            activeforeground=activity[1],
+            text='Change Desc',
+            command=change_desc
+        ).grid(column=0, row=0, sticky='nwes')
+        
+        tk.Button(
+            button_frame,
+            font=('Ariel', 10),
+            background=activity[1],
+            foreground=activity[2],
+            activebackground=activity[2],
+            activeforeground=activity[1],
+            text='Change Activity',
+            command=change_activity
+        ).grid(column=1, row=0, sticky='nwes')
+    
+        tk.Button(
+            button_frame,
+            font=('Ariel', 10),
+            background=activity[1],
+            foreground=activity[2],
+            activebackground=activity[2],
+            activeforeground=activity[1],
+            text='Delete',
+            command=delete
+        ).grid(column=0, row=1, sticky='nwes')
+        
+        tk.Button(
+            button_frame,
+            font=('Ariel', 10),
+            background=activity[1],
+            foreground=activity[2],
+            activebackground=activity[2],
+            activeforeground=activity[1],
+            text='Google calendar',
+            command=google_calendar
+        ).grid(column=1, row=1, sticky='nwes')
     
     def open_main_window(self):
         """
