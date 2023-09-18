@@ -1,10 +1,7 @@
 
-# TODO dark i light mode
 # TODO w kalendarzu dodać przesyłanie do google calendar (pomyśleć jak połączyc różne sesje, jak je zapisać w lokalnym kalenadarzu, przy dodawaniu podać nazwe, opis itp)
 # TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp)
 # TODO dodać usuwanie całej activity (wybór czy usunąc action czy przenieść ją do innego activity)
-# TODO pobawic się wielkością guzików w summary
-# TODO pole z kalendarzem zrobić dłuższe
 
 import tkinter as tk
 from tkinter import ttk
@@ -369,11 +366,13 @@ class TimerApp():
             if not picked_activity in activities_values: 
                 bg_color = askcolor(
                     title=f"Choose backgroud color for {picked_activity}",
-                    color='pink'
+                    color='red',
+                    parent=save_window
                 )[1]
                 fg_color = askcolor(
                     title=f"Choose text color for {picked_activity}",
-                    color='blue'
+                    color='blue',
+                    parent=save_window
                 )[1]
                 activity_df = pd.DataFrame({
                     'name': [picked_activity],
@@ -563,7 +562,7 @@ class TimerApp():
                     t += 1
             
         self.clear_window()
-        self.root.geometry("400x500" + self.small_window_shift)
+        self.root.geometry("400x700" + self.long_window_shift)
         self.picked_date = ''
         
         today = datetime.now()
@@ -577,7 +576,7 @@ class TimerApp():
         
         for action in self.df_data.values.tolist():
             date = datetime.strptime(action[0], '%Y-%m-%d')
-            cal.calevent_create(date, action[4], action[5])
+            cal.calevent_create(date, action[5], action[5])
         
         activites = self.df_activity.values.tolist()
         
@@ -598,7 +597,7 @@ class TimerApp():
         
         #| Stores canvas
         canvas_container = tk.Frame(self.window)
-        canvas_container.pack(fill='both')
+        canvas_container.pack(fill='both', expand=True)
         
         #| Canvas contains scrollable content
         canvas = tk.Canvas(canvas_container)
@@ -750,7 +749,7 @@ class TimerApp():
                 height=1
             ).pack(fill='x', pady=20)
             
-            #* MIDDLE
+            #* MIDDLE (BUTTONS)
             
             mid_frame = tk.Frame(content, background=TimerApp.BGCOLOR)
             mid_frame.pack()
@@ -813,7 +812,7 @@ class TimerApp():
                 activeforeground=TimerApp.BGCOLOR,
                 text="Change Color",
                 command=change_color
-            ).pack(side='left', padx=5)
+            ).pack(side='left', padx=5, fill='y')
             
             #| change name
             tk.Button(
@@ -830,26 +829,16 @@ class TimerApp():
             #| change time range
             picked_range = tk.StringVar(value=self.range_optionts[self.time_range])
             picked_range.trace('w', change_time_range)
-            range_menu = tk.OptionMenu(
+            range_menu = ttk.Combobox(
                 mid_frame,
-                picked_range,
-                *self.range_optionts
-            )
-            range_menu.config(
+                textvariable=picked_range,
+                values=self.range_optionts,
                 font=("Ariel",15),
+                width=11,
                 background=TimerApp.BGCOLOR,
-                foreground=TimerApp.FGCOLOR,
-                activebackground=TimerApp.BGCOLOR,
-                activeforeground=TimerApp.FGCOLOR,
-                highlightbackground=TimerApp.BGCOLOR,
-                highlightcolor=TimerApp.BGCOLOR
+                foreground='black'
             )
-            range_menu['menu'].config(
-                font=("Ariel",10),
-                background=TimerApp.BGCOLOR,
-                foreground=TimerApp.FGCOLOR
-            )
-            range_menu.pack(side='left', padx=5)
+            range_menu.pack(side='left', padx=5, fill='y')
             
             tk.Frame( #| Separator
                 content,
@@ -1046,7 +1035,7 @@ class TimerApp():
                     if not self.df_activity['name'].isin([picked_activity]).any():
                         bg_color = askcolor(
                             title=f"Choose backgroud color for {picked_activity}",
-                            color='pink',
+                            color='red',
                             parent=action_window
                         )[1]
                         fg_color = askcolor(
