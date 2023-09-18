@@ -19,10 +19,11 @@ from ctypes import windll
 
 class TimerApp():
     
-    EFFECTSCOLOR = '#3e4042' # button color effects in the title bar
-    BARCOLOR = '#1e1e1c' # title bar color
-    BGCOLOR = '#25292e' # background color
-    FGCOLOR = '#cbc8cb' # text color
+    EFFECTSCOLOR = '#3f3f3f' # button color effects in the title bar
+    BARCOLOR = '#151515' # title bar color
+    BGCOLOR = '#2a2a2a' # background color
+    MIDCOLOR = '#545454' # shade between bg and fg
+    FGCOLOR = '#ededed' # text color
 
     def __init__(self) -> None:
         self.time_reset()
@@ -30,7 +31,8 @@ class TimerApp():
         self.custom_title_bar()
 
     def after_init(self):
-        self.window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 3}"
+        self.small_window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 3}"
+        self.long_window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 5}"
         self.root.resizable(False, False)
         self.open_main_window()
     
@@ -257,7 +259,7 @@ class TimerApp():
 
         self.clear_window()
         self.start_time = datetime.now()
-        self.root.geometry("300x200" + self.window_shift)
+        self.root.geometry("300x200" + self.small_window_shift)
         # timer_window.resizable(False, False)
         self.window.config(bg=TimerApp.BGCOLOR)
         
@@ -298,7 +300,7 @@ class TimerApp():
             font=("Ariel",15),
             fg=TimerApp.FGCOLOR,
             bg=TimerApp.BGCOLOR,
-            selectcolor=TimerApp.EFFECTSCOLOR, 
+            selectcolor=TimerApp.MIDCOLOR,
             variable=is_running, 
             textvariable=button_text, 
             indicatoron=False
@@ -398,33 +400,43 @@ class TimerApp():
         save_window.attributes('-topmost', 'true')
         save_window.grab_set()
         save_window.title("Save Your Progres")
-        save_window.geometry("320x385" + self.window_shift)
+        save_window.config(background=TimerApp.MIDCOLOR)
+        save_window.geometry("320x385" + self.small_window_shift)
         
         #| TIME FRAME
         #| Contains main_timer, break_timer from session and static text
         time_frame = tk.Frame(save_window)
+        time_frame.config(background=TimerApp.MIDCOLOR)
         time_frame.pack(pady=20)
         
         ttk.Label(
             time_frame,
+            background=TimerApp.MIDCOLOR,
+            foreground=TimerApp.FGCOLOR,
             font=("Ariel",15),
             text="Dedicated time:"
         ).pack()
         
         tk.Label(
             time_frame,
+            background=TimerApp.MIDCOLOR,
+            foreground=TimerApp.FGCOLOR,
             font=("Ariel",40),
             text=self.main_timer.get()
         ).pack()
         
         ttk.Label(
             time_frame,
+            background=TimerApp.MIDCOLOR,
+            foreground=TimerApp.FGCOLOR,
             font=("Ariel",15),
             text="Breaks time:"
         ).pack()
         
         ttk.Label(
             time_frame,
+            background=TimerApp.MIDCOLOR,
+            foreground=TimerApp.FGCOLOR,
             font=("Ariel",15),
             text=self.break_timer.get()
         ).pack()
@@ -445,11 +457,14 @@ class TimerApp():
         #| BOTTOM FRAME
         #| Contains save_button and activity combobox
         bottom = tk.Frame(save_window)
+        bottom.config(background=TimerApp.MIDCOLOR)
         bottom.pack()
         
         #| Run save_and_quit func
         tk.Button(
             bottom,
+            background=TimerApp.MIDCOLOR,
+            foreground=TimerApp.FGCOLOR,
             text="Save",
             command=save_and_quit
         ).pack(side='left', padx=(0,10))
@@ -505,7 +520,7 @@ class TimerApp():
                     frame = tk.Frame(content, highlightbackground="black", highlightthickness=1, width=50, height=1)
                     frame.grid(row=i, column=0, sticky='s')
                 elif not i % 4:
-                    separator = tk.Label(content, text=f"{t}:00", background=TimerApp.FGCOLOR, foreground=TimerApp.BGCOLOR)
+                    separator = tk.Label(content, text=f"{t}:00", background=TimerApp.MIDCOLOR, foreground='black')
                     separator.grid(row=i, column=0)
                     t += 1
                     
@@ -548,7 +563,7 @@ class TimerApp():
                     t += 1
             
         self.clear_window()
-        self.root.geometry("400x500" + self.window_shift)
+        self.root.geometry("400x500" + self.small_window_shift)
         self.picked_date = ''
         
         today = datetime.now()
@@ -587,7 +602,7 @@ class TimerApp():
         
         #| Canvas contains scrollable content
         canvas = tk.Canvas(canvas_container)
-        content = tk.Frame(canvas, background=TimerApp.FGCOLOR)
+        content = tk.Frame(canvas, background=TimerApp.MIDCOLOR)
         scrollbar = tk.Scrollbar(canvas_container, orient="vertical", command=canvas.yview)
         canvas.configure(yscrollcommand=scrollbar.set)
         
@@ -651,8 +666,8 @@ class TimerApp():
             top_bar.pack(fill='x')
             tk.Button(
                 top_bar,
-                background=TimerApp.FGCOLOR,
-                foreground=TimerApp.BGCOLOR,
+                background=TimerApp.MIDCOLOR,
+                foreground=TimerApp.FGCOLOR,
                 activebackground=TimerApp.BGCOLOR,
                 activeforeground=TimerApp.FGCOLOR,
                 font=('calibri',15),
@@ -893,7 +908,6 @@ class TimerApp():
                 date_off_set = datetime.now() - timedelta(days=offset[self.time_range])
                 self.df_data = self.df_data.loc[self.df_data['date'] >= date_off_set]
                 self.df_data['date'] = self.df_data['date'].dt.date
-            # print(self.df_data)
                 
         self.clear_window()
         self.root.geometry(f"{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}+0+0")
@@ -924,7 +938,7 @@ class TimerApp():
         action_window.resizable(False, False)
         action_window.attributes('-topmost', 'true')
         action_window.title(action[5])
-        action_window.geometry(self.window_shift)
+        action_window.geometry(self.small_window_shift)
         action_window.config(bg=activity[1])
         
         font = tkFont.Font(family='Ariel', size=40)
@@ -1137,21 +1151,37 @@ class TimerApp():
             command=google_calendar
         ).grid(column=1, row=1, sticky='nwes')
     
+    def change_color_mode(self):
+        """
+        Changes bg and fg color for app
+        """
+        if TimerApp.BGCOLOR == '#2a2a2a':
+            #| switch to ligth mode
+            TimerApp.BGCOLOR = '#ededed' # background color
+            TimerApp.MIDCOLOR = '#a9a9a9'
+            TimerApp.FGCOLOR = '#2a2a2a' # text color
+        else:
+            #| switch to dark mode
+            TimerApp.BGCOLOR = '#2a2a2a' # background color
+            TimerApp.MIDCOLOR = '#545454'
+            TimerApp.FGCOLOR = '#ededed' # text color
+        self.open_main_window()
+        
     def open_main_window(self):
         """
         MENU
         """
         self.clear_window()
-        self.root.geometry('446x548'+self.window_shift)
+        self.root.geometry('446x719' + self.long_window_shift)
         self.window.config(bg=TimerApp.BGCOLOR)
         
         button_to_timer = tk.Button(
             self.window,
             text="Timer",
-            fg=TimerApp.BGCOLOR, 
-            bg=TimerApp.FGCOLOR,
-            activebackground=TimerApp.EFFECTSCOLOR,
-            activeforeground=TimerApp.FGCOLOR,
+            bg=TimerApp.MIDCOLOR,
+            fg=TimerApp.FGCOLOR,
+            activebackground=TimerApp.MIDCOLOR,
+            activeforeground=TimerApp.BGCOLOR,
             pady= 12,
             padx= 50,
             font=("Ariel", 40 , 'bold'),
@@ -1162,10 +1192,10 @@ class TimerApp():
         button_to_calendar = tk.Button(
             self.window,
             text='Calendar',
-            fg=TimerApp.BGCOLOR, 
-            bg=TimerApp.FGCOLOR,
-            activebackground=TimerApp.EFFECTSCOLOR,
-            activeforeground=TimerApp.FGCOLOR,
+            bg=TimerApp.MIDCOLOR,
+            fg=TimerApp.FGCOLOR,
+            activebackground=TimerApp.MIDCOLOR,
+            activeforeground=TimerApp.BGCOLOR,
             pady= 12,
             padx= 50,
             font=("Ariel", 40 , 'bold'),
@@ -1176,10 +1206,10 @@ class TimerApp():
         button_to_summary = tk.Button(
             self.window,
             text='Summary',
-            fg=TimerApp.BGCOLOR, 
-            bg=TimerApp.FGCOLOR,
-            activebackground=TimerApp.EFFECTSCOLOR,
-            activeforeground=TimerApp.FGCOLOR,
+            bg=TimerApp.MIDCOLOR,
+            fg=TimerApp.FGCOLOR,
+            activebackground=TimerApp.MIDCOLOR,
+            activeforeground=TimerApp.BGCOLOR,
             pady= 12,
             padx= 50,
             font=("Ariel", 40 , 'bold'),
@@ -1187,6 +1217,20 @@ class TimerApp():
         )
         button_to_summary.pack(fill='x', padx=30, pady=20)
 
+        button_change_mode = tk.Button(
+            self.window,
+            text='Change Mode',
+            bg=TimerApp.MIDCOLOR,
+            fg=TimerApp.FGCOLOR,
+            activebackground=TimerApp.MIDCOLOR,
+            activeforeground=TimerApp.BGCOLOR,
+            pady= 12,
+            padx= 50,
+            font=("Ariel", 40 , 'bold'),
+            command=self.change_color_mode
+        )
+        button_change_mode.pack(fill='x', padx=30, pady=20)
+        
 if __name__=="__main__":
     t = TimerApp()
     t.conn.close()
