@@ -797,6 +797,62 @@ class TimerApp():
                     command=submit_new_name
                 ).pack()
             
+            def delete_activity():
+                def change_activity_in_data(*args):
+                    print(picked_activity.get())
+                    update_id = pd.read_sql_query(f'SELECT id FROM activities WHERE name = "{picked_activity.get()}"', self.conn).iloc[0, 0]
+                    del_id = pd.read_sql_query(f'SELECT id FROM activities WHERE name = "{activity}"', self.conn).iloc[0, 0]
+                    curr = self.conn.cursor()
+                    curr.execute(f'UPDATE data SET activity = "{update_id}" WHERE activity = "{del_id}"')
+                    curr.execute(f'DELETE FROM activities WHERE id = "{del_id}"')
+                    self.conn.commit()
+                    pick_new_activity.destroy()
+                    self.open_main_window()
+                
+                def delete_data():
+                    id_number = pd.read_sql_query(f'SELECT id FROM activities WHERE name = "{activity}"', self.conn).iloc[0, 0]
+                    curr = self.conn.cursor()
+                    curr.execute(f'DELETE FROM data WHERE activity = "{id_number}"')
+                    curr.execute(f'DELETE FROM activities WHERE id = "{id_number}"')
+                    self.conn.commit()
+                    pick_new_activity.destroy()
+                    self.open_main_window()
+                
+                if messagebox.askyesno(f"Delete {activity}?", f"Are you sure you want to delete the activity named '{activity}'?", parent=self.root):
+                    pick_new_activity = tk.Toplevel(self.root)
+                    pick_new_activity.resizable(False, False)
+                    pick_new_activity.attributes('-topmost', 'true')
+                    pick_new_activity.title(activity)
+                    pick_new_activity.geometry(self.small_window_shift)
+                    pick_new_activity.config(background=TimerApp.MIDCOLOR)
+                    
+                    tk.Label(
+                        pick_new_activity,
+                        font=('Ariel', 15),
+                        background=TimerApp.MIDCOLOR,
+                        foreground=TimerApp.FGCOLOR,
+                        text=f"Do you want to transfer data from\n'{activity}' activity to another activity?"
+                    ).pack()
+                    
+                    picked_activity = tk.StringVar()
+                    picked_activity.trace('w', change_activity_in_data)
+                    ttk.Combobox(
+                        pick_new_activity,
+                        textvariable=picked_activity,
+                        values=self.df_activity['name'].to_list(),
+                        state='readonly',
+                        font=('Ariel', 15),
+                        background=TimerApp.MIDCOLOR,
+                        foreground='black'
+                    ).pack(fill='x', expand=True)
+                    
+                    tk.Button(
+                        pick_new_activity,
+                        font=('Ariel', 15),
+                        text='No, delete all data',
+                        command=delete_data
+                    ).pack()
+            
             def change_time_range(*args):
                 self.time_range = self.range_optionts.index(picked_range.get())
                 fetch_dfs_with_range()
@@ -806,6 +862,7 @@ class TimerApp():
             tk.Button(
                 mid_frame,
                 font=("Ariel",15),
+                width=13,
                 foreground=TimerApp.FGCOLOR, 
                 background=TimerApp.BGCOLOR,
                 activebackground=TimerApp.FGCOLOR,
@@ -818,12 +875,26 @@ class TimerApp():
             tk.Button(
                 mid_frame,
                 font=("Ariel",15),
+                width=13,
                 foreground=TimerApp.FGCOLOR, 
                 background=TimerApp.BGCOLOR,
                 activebackground=TimerApp.FGCOLOR,
                 activeforeground=TimerApp.BGCOLOR,
                 text="Change Name",
                 command=change_name
+            ).pack(side='left', padx=5, fill='y')
+            
+            #| delete activity
+            tk.Button(
+                mid_frame,
+                font=("Ariel",15),
+                width=13,
+                foreground=TimerApp.FGCOLOR, 
+                background=TimerApp.BGCOLOR,
+                activebackground=TimerApp.FGCOLOR,
+                activeforeground=TimerApp.BGCOLOR,
+                text="Delete",
+                command=delete_activity
             ).pack(side='left', padx=5, fill='y')
             
             #| change time range
@@ -833,8 +904,9 @@ class TimerApp():
                 mid_frame,
                 textvariable=picked_range,
                 values=self.range_optionts,
+                state='readonly',
                 font=("Ariel",15),
-                width=11,
+                width=13,
                 background=TimerApp.BGCOLOR,
                 foreground='black'
             )
