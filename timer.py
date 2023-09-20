@@ -1,7 +1,6 @@
 
 # TODO w kalendarzu dodać przesyłanie do google calendar (pomyśleć jak połączyc różne sesje, jak je zapisać w lokalnym kalenadarzu, przy dodawaniu podać nazwe, opis itp)
 # TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp)
-# TODO dodać usuwanie całej activity (wybór czy usunąc action czy przenieść ją do innego activity)
 
 import tkinter as tk
 from tkinter import ttk
@@ -13,6 +12,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 from sqlite3 import connect
 from ctypes import windll
+from google_cal import add_to_google_calendar
 
 class TimerApp():
     
@@ -558,7 +558,7 @@ class TimerApp():
                 
                 #| Moves scrollbar to first action
                 if t == 24:
-                    canvas.yview_moveto(str(float((start_time // 4) / 24)))
+                    calendar_canvas.yview_moveto(str(float((start_time // 4) / 24)))
                     t += 1
             
         self.clear_window()
@@ -600,30 +600,30 @@ class TimerApp():
         canvas_container.pack(fill='both', expand=True)
         
         #| Canvas contains scrollable content
-        canvas = tk.Canvas(canvas_container)
-        content = tk.Frame(canvas, background=TimerApp.MIDCOLOR)
-        scrollbar = tk.Scrollbar(canvas_container, orient="vertical", command=canvas.yview)
-        canvas.configure(yscrollcommand=scrollbar.set)
+        calendar_canvas = tk.Canvas(canvas_container)
+        content = tk.Frame(calendar_canvas, background=TimerApp.MIDCOLOR)
+        scrollbar = tk.Scrollbar(canvas_container, orient="vertical", command=calendar_canvas.yview)
+        calendar_canvas.configure(yscrollcommand=scrollbar.set)
         
         scrollbar.pack(side="right", fill="y")
-        canvas.pack(side="left", fill="both", expand=True)
-        canvas_frame = canvas.create_window((0, 0), window=content, anchor="nw")
+        calendar_canvas.pack(side="left", fill="both", expand=True)
+        canvas_frame = calendar_canvas.create_window((0, 0), window=content, anchor="nw")
         
         #| Links scroll with content
         def on_frame_configure(event):
-            canvas.configure(scrollregion=canvas.bbox("all"))
+            calendar_canvas.configure(scrollregion=calendar_canvas.bbox("all"))
         content.bind("<Configure>", on_frame_configure)
         
         #| Changes width of canvas
         def frame_width(event):
             canvas_width = event.width
-            canvas.itemconfig(canvas_frame, width = canvas_width)
-        canvas.bind('<Configure>', frame_width)
+            calendar_canvas.itemconfig(canvas_frame, width = canvas_width)
+        calendar_canvas.bind('<Configure>', frame_width)
         
         #| Enables mousewheel
         def on_mousewheel(event):
-            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-        canvas.bind_all("<MouseWheel>", on_mousewheel)
+            calendar_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        calendar_canvas.bind_all("<MouseWheel>", on_mousewheel)
         
         self.window.update_idletasks()
         
@@ -924,24 +924,24 @@ class TimerApp():
             outer_frame = tk.Frame(content)
             outer_frame.pack(padx=10, pady=10, fill='both', expand=True)
 
-            canvas = tk.Canvas(outer_frame, background=bg_color, highlightthickness=1, highlightbackground=bg_color)
-            inner_frame = tk.Frame(canvas, background=bg_color)
+            summary_canvas = tk.Canvas(outer_frame, background=bg_color, highlightthickness=1, highlightbackground=bg_color)
+            inner_frame = tk.Frame(summary_canvas, background=bg_color)
             inner_frame.columnconfigure(1, weight=1)
-            scrollbar = tk.Scrollbar(outer_frame, orient="vertical", command=canvas.yview)
+            scrollbar = tk.Scrollbar(outer_frame, orient="vertical", command=summary_canvas.yview)
 
-            canvas.configure(yscrollcommand=scrollbar.set)
+            summary_canvas.configure(yscrollcommand=scrollbar.set)
 
             scrollbar.pack(side="right", fill="y")
-            canvas.pack(side="left", fill="both", expand=True)
-            canvas_frame = canvas.create_window((0, 0), window=inner_frame, anchor="nw")
+            summary_canvas.pack(side="left", fill="both", expand=True)
+            canvas_frame = summary_canvas.create_window((0, 0), window=inner_frame, anchor="nw")
 
             def onFrameConfigure(event):
-                canvas.configure(scrollregion=canvas.bbox("all"))
+                summary_canvas.configure(scrollregion=summary_canvas.bbox("all"))
             inner_frame.bind("<Configure>", onFrameConfigure)
             
             def onCanvasConfigure(event):
-                canvas.itemconfigure(canvas_frame, width=event.width)
-            canvas.bind("<Configure>", onCanvasConfigure)
+                summary_canvas.itemconfigure(canvas_frame, width=event.width)
+            summary_canvas.bind("<Configure>", onCanvasConfigure)
             
             #| Generates labels with data
             max_value = self.df_data[self.df_data['activity'] == activity]['main_time'].max()
@@ -1161,7 +1161,9 @@ class TimerApp():
                 
         
         def google_calendar():
-            pass
+            end = (datetime.strptime(action[0] + ' ' + action[1], '%Y-%m-%d %H:%M:%S') + timedelta(seconds=action[2])).strftime('%Y-%m-%dT%H:%M:%S')
+            # print(action[5], f"{action[0]}T{action[1]}", end, action[4])
+            add_to_google_calendar(action[5], f"{action[0]}T{action[1]}", end, action[4])
         
         button_frame = tk.Frame(right_container)
         button_frame.columnconfigure(0, weight=1)
