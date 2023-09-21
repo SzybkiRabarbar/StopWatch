@@ -1,7 +1,16 @@
 
-# TODO w kalendarzu dodać przesyłanie do google calendar (pomyśleć jak połączyc różne sesje, jak je zapisać w lokalnym kalenadarzu, przy dodawaniu podać nazwe, opis itp)
-# TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp)
+# TODO pomyśleć o dodawaniu nowego kalendarza do GCalendar, zamiast dodawać do głównego
+    #* tworzenie kalendarza
+    #* dodawania do stworzonego kalendarza
+# TODO otwieranie kolejnych funcji timera bez resetowania pozycji (geometry +na podstawie aktualej pozycji okna)
+# TODO naprawić bład 500
+# TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp) (zrobic prosty gdzie wpisuje się minuty)
+# TODO zapisać kolory główne aplikacji w osobnym pliku json i dodać możliwosć zmiany ich w settings
+# TODO pomyśleć o przenoszeniu aktywnosci między dniami (po 24), można dodac sprawdzanie po wypisaniu aktualnych
+# TODO restrukturyzacja kodu (podzielenie metod na osobne pliki, przekazywanie self jako argumentu)
+# TODO wyjść z wersji testowej calendar api
 
+from os import remove as remove_file
 import tkinter as tk
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
@@ -21,6 +30,7 @@ class TimerApp():
     BGCOLOR = '#2a2a2a' # background color
     MIDCOLOR = '#545454' # shade between bg and fg
     FGCOLOR = '#ededed' # text color
+    MODESIGN = '◑'
 
     def __init__(self) -> None:
         self.time_reset()
@@ -377,19 +387,33 @@ class TimerApp():
                 activity_df = pd.DataFrame({
                     'name': [picked_activity],
                     'bg': [bg_color if bg_color else '#000000'],
-                    'fg': [fg_color if fg_color else '#ffffff']
+                    'fg': [fg_color if fg_color else '#ffffff'],
+                    'auto': [0]
                 })
                 activity_df.to_sql('activities', self.conn, if_exists='append', index=False)
-                
+            
+            activity_data = pd.read_sql_query(f'SELECT id, auto FROM activities WHERE "name" == "{picked_activity}"', self.conn)
+            date = self.start_time.strftime('%Y-%m-%d')
+            start_time = self.start_time.strftime('%H:%M:%S')
+            desc = text_widget.get('1.0', tk.END).strip()
             df = pd.DataFrame({
-                'date': [self.start_time.strftime('%Y-%m-%d')],
-                'start_time': [self.start_time.strftime('%H:%M:%S')],
+                'date': [date],
+                'start_time': [start_time],
                 'main_time': [self.main_time.get()],
                 'break_time': [self.break_time.get()],
-                'desc': [text_widget.get('1.0', tk.END).strip()],
-                'activity': [pd.read_sql_query(f'SELECT id FROM activities WHERE "name" == "{picked_activity}"', self.conn).iloc[0, 0]]
+                'desc': [desc],
+                'activity': [activity_data.iloc[0, 0]]
             })
             df.to_sql('data', self.conn, if_exists='append',index=False)
+            
+            print(picked_activity)
+            if activity_data.iloc[0, 1]:
+                is_succes, res = add_to_google_calendar(picked_activity, date, start_time, int(self.main_time.get() + int(self.break_time.get())), desc)
+                if is_succes:
+                    messagebox.showinfo(picked_activity, f"{picked_activity} was succesful added to your calendar", parent=save_window)
+                else:
+                    messagebox.showerror(picked_activity, f"Action wasn't added to Google Calendar.\nError occurs:\n{res}", parent=save_window)
+            
             save_window.destroy()
             self.open_main_window()
         
@@ -799,7 +823,6 @@ class TimerApp():
             
             def delete_activity():
                 def change_activity_in_data(*args):
-                    print(picked_activity.get())
                     update_id = pd.read_sql_query(f'SELECT id FROM activities WHERE name = "{picked_activity.get()}"', self.conn).iloc[0, 0]
                     del_id = pd.read_sql_query(f'SELECT id FROM activities WHERE name = "{activity}"', self.conn).iloc[0, 0]
                     curr = self.conn.cursor()
@@ -1118,7 +1141,8 @@ class TimerApp():
                         activity_df = pd.DataFrame({
                             'name': [picked_activity],
                             'bg': [bg_color if bg_color else '#000000'],
-                            'fg': [fg_color if fg_color else '#ffffff']
+                            'fg': [fg_color if fg_color else '#ffffff'],
+                            'auto': [0]
                         })
                         activity_df.to_sql('activities', self.conn, if_exists='append', index=False)
                     self.fetch_dfs()
@@ -1149,7 +1173,6 @@ class TimerApp():
             
         def delete():
             if messagebox.askyesno("Delete", f"are you sure you want to delete\n'{action[5]}' from {action[0]} {action[1]}", parent=action_window):
-                print('delete')
                 curr = self.conn.cursor()
                 curr.execute(
                     f'DELETE FROM data '
@@ -1161,9 +1184,11 @@ class TimerApp():
                 
         
         def google_calendar():
-            end = (datetime.strptime(action[0] + ' ' + action[1], '%Y-%m-%d %H:%M:%S') + timedelta(seconds=action[2])).strftime('%Y-%m-%dT%H:%M:%S')
-            # print(action[5], f"{action[0]}T{action[1]}", end, action[4])
-            add_to_google_calendar(action[5], f"{action[0]}T{action[1]}", end, action[4])
+            is_succes, res = add_to_google_calendar(action[5], action[0], action[1], int(action[2]) + int(action[3]), action[4])
+            if is_succes:
+                messagebox.showinfo(action[5], f"{action[5]} was succesful added to your calendar", parent=action_window)
+            else:
+                messagebox.showerror(action[5], res, parent=action_window)
         
         button_frame = tk.Frame(right_container)
         button_frame.columnconfigure(0, weight=1)
@@ -1213,7 +1238,123 @@ class TimerApp():
             text='Google calendar',
             command=google_calendar
         ).grid(column=1, row=1, sticky='nwes')
-    
+
+    def pick_auto_append_activities(self):
+        self.clear_window()
+        
+        def save_auto():
+            marked = [str(activity_list[x][0]) for x in lbox.curselection()]
+            curr = self.conn.cursor()
+            if marked:
+                curr.execute(   
+                    f'UPDATE activities '
+                    f'SET auto = CASE ' 
+                    f'WHEN id IN ({", ".join(marked)}) THEN 1 '
+                    f'ELSE 0 '
+                    f'END; '
+                )
+            else:
+                curr.execute(
+                    'UPDATE activities SET auto = 0;'
+                )
+            self.conn.commit()
+            self.open_settings()
+            
+        tk.Label(
+            self.window,
+            font=('Ariel', 10),
+            background=TimerApp.BGCOLOR,
+            foreground=TimerApp.FGCOLOR,
+            text='Select activities to be automatically added to your Google calendar'
+        ).pack(pady=(10,0))
+        
+        lbox = tk.Listbox(
+            self.window,
+            font=('Ariel', 15),
+            background=TimerApp.BGCOLOR,
+            foreground=TimerApp.FGCOLOR,
+            selectmode=tk.MULTIPLE
+        )
+        lbox.pack(pady=10, padx=30, fill='x')
+        activity_list = pd.read_sql_query("SELECT id, name, auto FROM activities", self.conn).values.tolist()
+        for _, name, auto in activity_list:
+            lbox.insert(tk.END, ' ' + name)
+            if auto == 1:
+                lbox.selection_set(tk.END)
+        
+        b_frame = tk.Frame(self.window)
+        b_frame.pack()
+        
+        tk.Button(
+            b_frame,
+            font=('Ariel', 15),
+            background=TimerApp.BGCOLOR,
+            foreground=TimerApp.FGCOLOR,
+            text='Save',
+            command=save_auto
+        ).pack(side='left')
+        
+        tk.Button(
+            b_frame,
+            font=('Ariel', 15),
+            background=TimerApp.BGCOLOR,
+            foreground=TimerApp.FGCOLOR,
+            text='Cancel',
+            command=self.open_settings
+        ).pack(side='right')
+        
+    def open_settings(self):
+        self.clear_window()
+        
+        def rm_token():
+            try: 
+                remove_file('token.json')
+                messagebox.showinfo('Data removed', 'Data was removed')
+            except FileNotFoundError:
+                messagebox.showwarning('No data', 'Data not found')
+            
+        tk.Label(
+            self.window,
+            font=('Ariel', 20),
+            background=TimerApp.BGCOLOR,
+            foreground=TimerApp.FGCOLOR,
+            text='Google Calendar'
+        ).pack(anchor='w')
+        
+        tk.Frame( #| Separator
+            self.window,
+            background=TimerApp.FGCOLOR,
+            bd=0,
+            height=1
+        ).pack(fill='x', pady=5)
+        
+        tk.Button(
+            self.window,
+            font=('Ariel', 10),
+            background=TimerApp.BGCOLOR,
+            foreground=TimerApp.FGCOLOR,
+            anchor='w',
+            text="Remove Data About Used Account",
+            command=rm_token
+        ).pack(fill='x')
+        
+        tk.Button(
+            self.window,
+            font=('Ariel', 10),
+            background=TimerApp.BGCOLOR,
+            foreground=TimerApp.FGCOLOR,
+            anchor='w',
+            text="Auto Append To Calendar",
+            command=self.pick_auto_append_activities
+        ).pack(fill='x')
+        
+        tk.Frame( #| Separator
+            self.window,
+            background=TimerApp.FGCOLOR,
+            bd=0,
+            height=1
+        ).pack(fill='x', pady=5)
+        
     def change_color_mode(self):
         """
         Changes bg and fg color for app
@@ -1223,11 +1364,13 @@ class TimerApp():
             TimerApp.BGCOLOR = '#ededed' # background color
             TimerApp.MIDCOLOR = '#a9a9a9'
             TimerApp.FGCOLOR = '#2a2a2a' # text color
+            TimerApp.MODESIGN = '◐'
         else:
             #| switch to dark mode
             TimerApp.BGCOLOR = '#2a2a2a' # background color
             TimerApp.MIDCOLOR = '#545454'
             TimerApp.FGCOLOR = '#ededed' # text color
+            TimerApp.MODESIGN = '◑'
         self.open_main_window()
         
     def open_main_window(self):
@@ -1280,20 +1423,36 @@ class TimerApp():
         )
         button_to_summary.pack(fill='x', padx=30, pady=20)
 
+        fr = tk.Frame(self.window)
+        fr.pack(fill='x', padx=30, pady=20)
+                
         button_change_mode = tk.Button(
-            self.window,
-            text='Change Mode',
+            fr,
+            text=TimerApp.MODESIGN,
             bg=TimerApp.MIDCOLOR,
             fg=TimerApp.FGCOLOR,
             activebackground=TimerApp.MIDCOLOR,
             activeforeground=TimerApp.BGCOLOR,
             pady= 12,
-            padx= 50,
+            padx= 25,
             font=("Ariel", 40 , 'bold'),
             command=self.change_color_mode
         )
-        button_change_mode.pack(fill='x', padx=30, pady=20)
+        button_change_mode.pack(side='left')
         
+        button_to_google = tk.Button(
+            fr,
+            text='Settings',
+            bg=TimerApp.MIDCOLOR,
+            fg=TimerApp.FGCOLOR,
+            activebackground=TimerApp.MIDCOLOR,
+            activeforeground=TimerApp.BGCOLOR,
+            pady= 12,
+            font=("Ariel", 40 , 'bold'),
+            command=self.open_settings
+        )
+        button_to_google.pack(side='right', fill='x', expand=True)
+
 if __name__=="__main__":
     t = TimerApp()
     t.conn.close()

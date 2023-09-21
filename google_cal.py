@@ -1,7 +1,7 @@
 from __future__ import print_function
 
-import datetime
 import os.path
+from datetime import datetime, timedelta
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -12,11 +12,13 @@ from googleapiclient.errors import HttpError
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
-
-def add_to_google_calendar(name, start, end, desc):
+def add_to_google_calendar(name: str, date: str, start_time: str, duration: int, desc: str) -> tuple[int, str]:
     '''
-    Add action to google calendar, use AuthO
+    Add action to google calendar, through google calendar api.
+    Returns a tuple with int that represents whether the event was successfully added 
+    and str that is either a link to the event or an error code.
     '''
+    print(name, date, start_time, duration, desc)
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -37,12 +39,12 @@ def add_to_google_calendar(name, start, end, desc):
 
     try:
         service = build('calendar', 'v3', credentials=creds)
-
+        end = (datetime.strptime(date + ' ' + start_time, '%Y-%m-%d %H:%M:%S') + timedelta(seconds=duration)).strftime('%Y-%m-%dT%H:%M:%S')
         event = {
         'summary': name,
         'description': desc,
         'start': {
-            'dateTime': f"{start}+02:00",
+            'dateTime': f"{date}T{start_time}+02:00",
         },
         'end': {
             'dateTime': f"{end}+02:00",
@@ -50,10 +52,10 @@ def add_to_google_calendar(name, start, end, desc):
         }
 
         event = service.events().insert(calendarId='primary', body=event).execute()
-        print(f"Event: {event.get('htmlLink')}")
+        return (1, event.get('htmlLink'))
 
     except HttpError as error:
-        print('An error occurred: %s' % error)
+        return (0, error)
 
 
 if __name__ == '__main__':
