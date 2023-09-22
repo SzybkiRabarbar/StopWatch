@@ -1,11 +1,10 @@
 
+# TODO zapisać kolory główne aplikacji w osobnym pliku json i dodać możliwosć zmiany ich w settings
 # TODO pomyśleć o dodawaniu nowego kalendarza do GCalendar, zamiast dodawać do głównego
     #* tworzenie kalendarza
     #* dodawania do stworzonego kalendarza
-# TODO otwieranie kolejnych funcji timera bez resetowania pozycji (geometry +na podstawie aktualej pozycji okna)
 # TODO naprawić bład 500
 # TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp) (zrobic prosty gdzie wpisuje się minuty)
-# TODO zapisać kolory główne aplikacji w osobnym pliku json i dodać możliwosć zmiany ich w settings
 # TODO pomyśleć o przenoszeniu aktywnosci między dniami (po 24), można dodac sprawdzanie po wypisaniu aktualnych
 # TODO restrukturyzacja kodu (podzielenie metod na osobne pliki, przekazywanie self jako argumentu)
 # TODO wyjść z wersji testowej calendar api
@@ -38,8 +37,9 @@ class TimerApp():
         self.custom_title_bar()
 
     def after_init(self):
-        self.small_window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 3}"
-        self.long_window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 5}"
+        self.default_window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 5}"
+        self.was_fullscreen = False
+        self.root.geometry('1x1' + self.default_window_shift)
         self.root.resizable(False, False)
         self.open_main_window()
     
@@ -51,6 +51,10 @@ class TimerApp():
             self.conn)
         
         self.df_activity = pd.read_sql_query('SELECT name, bg, fg, id FROM activities', self.conn)    
+    
+    def get_shift(self):
+        t = self.root.geometry()
+        return t[t.index('+')::]
     
     def clear_window(self):
         for widget in self.window.winfo_children(): 
@@ -266,9 +270,7 @@ class TimerApp():
 
         self.clear_window()
         self.start_time = datetime.now()
-        self.root.geometry("300x200" + self.small_window_shift)
-        # timer_window.resizable(False, False)
-        self.window.config(bg=TimerApp.BGCOLOR)
+        self.root.geometry("300x200")
         
         #| main_time stores the time (in sec)
         self.main_time = tk.IntVar(value=0)
@@ -424,7 +426,7 @@ class TimerApp():
         save_window.grab_set()
         save_window.title("Save Your Progres")
         save_window.config(background=TimerApp.MIDCOLOR)
-        save_window.geometry("320x385" + self.small_window_shift)
+        save_window.geometry("320x385" + self.get_shift())
         
         #| TIME FRAME
         #| Contains main_timer, break_timer from session and static text
@@ -586,7 +588,7 @@ class TimerApp():
                     t += 1
             
         self.clear_window()
-        self.root.geometry("400x700" + self.long_window_shift)
+        self.root.geometry("400x700")
         self.picked_date = ''
         
         today = datetime.now()
@@ -846,7 +848,7 @@ class TimerApp():
                     pick_new_activity.resizable(False, False)
                     pick_new_activity.attributes('-topmost', 'true')
                     pick_new_activity.title(activity)
-                    pick_new_activity.geometry(self.small_window_shift)
+                    pick_new_activity.geometry(self.default_window_shift)
                     pick_new_activity.config(background=TimerApp.MIDCOLOR)
                     
                     tk.Label(
@@ -994,6 +996,7 @@ class TimerApp():
                 self.df_data['date'] = self.df_data['date'].dt.date
                 
         self.clear_window()
+        self.was_fullscreen = True
         self.root.geometry(f"{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}+0+0")
         
         self.range_optionts = ["Total", "Last 7 days", "Last 30 days", "Last 90 days", "Last Year"]
@@ -1022,7 +1025,7 @@ class TimerApp():
         action_window.resizable(False, False)
         action_window.attributes('-topmost', 'true')
         action_window.title(action[5])
-        action_window.geometry(self.small_window_shift)
+        action_window.geometry(self.default_window_shift)
         action_window.config(bg=activity[1])
         
         font = tkFont.Font(family='Ariel', size=40)
@@ -1378,7 +1381,10 @@ class TimerApp():
         MENU
         """
         self.clear_window()
-        self.root.geometry('446x719' + self.long_window_shift)
+        if self.was_fullscreen:
+            self.root.geometry(self.default_window_shift)
+            self.was_fullscreen = False
+        self.root.geometry('446x719')
         self.window.config(bg=TimerApp.BGCOLOR)
         
         button_to_timer = tk.Button(
