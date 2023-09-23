@@ -9,7 +9,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-# If modifying these scopes, delete the file token.json.
+# If modifying these scopes, delete the file Source\\GogleCalendar\\token.json.
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 def add_to_google_calendar(name: str, date: str, start_time: str, duration: int, desc: str) -> tuple[int, str]:
@@ -18,9 +18,8 @@ def add_to_google_calendar(name: str, date: str, start_time: str, duration: int,
     Returns a tuple with int that represents whether the event was successfully added 
     and str that is either a link to the event or an error code.
     '''
-    print(name, date, start_time, duration, desc)
     creds = None
-    # The file token.json stores the user's access and refresh tokens, and is
+    # The file Source\\GogleCalendar\\token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
     if os.path.exists('token.json'):
@@ -56,7 +55,3 @@ def add_to_google_calendar(name: str, date: str, start_time: str, duration: int,
 
     except HttpError as error:
         return (0, error)
-
-
-if __name__ == '__main__':
-    add_to_google_calendar()
