@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import tkcalendar as tkc
 import tkinter as tk
 
@@ -97,7 +97,7 @@ class CreateCalendar:
             
     def print_data(self):
         """
-        Prints grid with timestaps and actions from picked date 
+        Create grid with timestaps and actions from picked date 
         """        
         actions = self.App.df_data[self.App.df_data['date'] == self.picked_date] 
         #| Deletes data from previos picked day
@@ -123,7 +123,7 @@ class CreateCalendar:
                 separator.grid(row=i, column=0)
                 t += 1
                 
-        #| Adds buttons to seccond column. Each button represent action (the longer the activity, the bigger the button), button trigger on_click()
+        #| Adds buttons to seccond column. Each button represent action (the longer the activity, the bigger the button), button call open_event
         for action in actions.values.tolist():
             start_time = [int(x) for x in action[1].split(':')]
             start_time = ((start_time[0] * 60) + start_time[1] + (1 if start_time[2] else 0)) // 15
@@ -160,3 +160,55 @@ class CreateCalendar:
             if t == 24:
                 self.calendar_canvas.yview_moveto(str(float((start_time // 4) / 24)))
                 t += 1
+                
+        self.check_previous_day()
+    
+    def check_previous_day(self):
+        """
+        Checks if last action from previous day passed to the next day
+        If passed THEN call print_previous_day_action
+        """
+        previous_day_date = datetime.strptime(self.picked_date, '%Y-%m-%d') - timedelta(days=1)
+        previous_day_date = previous_day_date.strftime('%Y-%m-%d')
+        
+        #| Data about last action from previous
+        last_action = self.App.df_data[self.App.df_data['date'] == previous_day_date].tail(1).values.tolist()
+        if last_action:
+            last_action = last_action[0]
+            la_start_date =  datetime.strptime(f"{last_action[0]} {last_action[1]}", '%Y-%m-%d %H:%M:%S')
+            la_duration = last_action[2] + last_action[3]
+            la_end_date = la_start_date + timedelta(seconds=la_duration)
+            
+            #| check if passed
+            if la_end_date.day > la_start_date.day:
+                self.print_previous_day_action(last_action, la_end_date)
+    
+    def print_previous_day_action(self, last_action: list, la_end_date: datetime):
+        """Append last action from previous day to content grid"""
+        duration_time = la_end_date - la_end_date.replace(hour=0, minute=0, second=0)
+        duration = int(((duration_time.total_seconds()) / 60) // 15)
+        activity = [activity for activity in self.activites if activity[0] == last_action[5]][0]
+        
+        button = tk.Button(
+            self.content,
+            font = (self.App.FONTF, 1),
+            text = '', 
+            background = activity[1],
+            foreground = activity[2],
+            command = lambda x=[last_action, activity]: self.App.open_event(x)
+        )
+        
+        if duration: 
+            button.configure(font=(self.App.FONTF, 15), text=f"{last_action[5]}")
+            button.grid(
+                column = 1,
+                row = 0,
+                rowspan = duration + 1,
+                sticky='nwes'
+            )
+        else:
+            button.grid(
+                column = 1,
+                row = 0,
+                sticky='nwes'
+            )

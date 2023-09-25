@@ -282,7 +282,7 @@ class CreateSummary:
             tk.Frame(
                 inner_frame,
                 height=30,
-                width=int(row[2] / max_value * 1617), #! tylko dla full hd
+                width=int(row[2] / max_value * 1617),
                 background=self.fg_color
             ).grid(column=1, row=i, sticky='w', padx=(0,10))
     
@@ -312,33 +312,43 @@ class CreateSummary:
         """
         Change name of picked activity.\n
         Opens window with text entry for new name and button to save new name
-        """
-        def submit_new_name():
-            """Modify name of picked activity"""
-            cursor = self.App.conn.cursor()
-            if new_name.get():
-                cursor.execute(
-                    f'UPDATE activities SET name = "{new_name.get().upper()}" WHERE name = "{self.activity}"'
-                )
-            self.App.conn.commit()
-            self.fetch_dfs_with_range()
-            self.create_buttons()
-            
+        """        
         change_name_window = tk.Toplevel(self.mid_frame)
         change_name_window.title('Change name')
-        new_name = tk.StringVar()
-        new_name.set(self.activity)
+        self.new_name = tk.StringVar()
+        self.new_name.set(self.activity)
         tk.Entry(
             change_name_window,
             font=('Ariel', 15),
-            textvariable=new_name
+            textvariable=self.new_name
         ).pack()
         tk.Button(
             change_name_window,
             font=('Ariel', 15),
             text='Change name',
-            command=submit_new_name
+            command=self.submit_new_name
         ).pack()
+    
+    def submit_new_name(self):
+        """Modify name of picked activity"""
+        
+        def is_activity_in_DB(new_activity: str) -> bool:
+            return read_sql_query(f'SELECT name FROM activities WHERE name="{new_activity}"', self.App.conn).shape[0]
+        
+        cursor = self.App.conn.cursor()
+        new_activity = self.new_name.get().upper()
+        if is_activity_in_DB(new_activity):
+            messagebox.showerror(
+                f"{new_activity} already exists",
+                f"{new_activity} already exists, try new name.\nIf you want to merge activities try deleting one of them."
+            )
+        elif new_activity:
+            cursor.execute(
+                f'UPDATE activities SET name = "{new_activity}" WHERE name = "{self.activity}"'
+            )
+            self.App.conn.commit()
+        self.fetch_dfs_with_range()
+        self.create_buttons()
     
     def delete_activity(self):
         """

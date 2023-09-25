@@ -1,15 +1,14 @@
 
-# TODO opisy aplikacji
-# TODO w zmianie nazwy aktywnosci dodać sprawdzanie czy podana nazwa nie jest już w bazie
+#// TODO w zmianie nazwy aktywnosci dodać sprawdzanie czy podana nazwa nie jest już w bazie
+#// TODO pomyśleć o przenoszeniu aktywnosci między dniami (po 24), można dodac sprawdzanie po wypisaniu aktualnych
 # TODO naprawić w summary pasek ilości czasu (?)
-# TODO pomyśleć o przenoszeniu aktywnosci między dniami (po 24), można dodac sprawdzanie po wypisaniu aktualnych
+# TODO zobaczyć czy świerzo otwarty kalendarz mozna ustawić na odpowiedniej godzinie
 # TODO zapisać kolory główne aplikacji w osobnym pliku json i dodać możliwosć zmiany ich w settings
     #* to samo z fontem
 # TODO pomyśleć o dodawaniu nowego kalendarza do GCalendar, zamiast dodawać do głównego
     #* tworzenie kalendarza
     #* dodawania do stworzonego kalendarza
 # TODO naprawić bład 500
-# TODO zobaczyć czy świerzo otwarty kalendarz mozna ustawić na odpowiedniej godzinie
 # TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp) (zrobic prosty gdzie wpisuje się minuty)
 # TODO wyjść z wersji testowej calendar api
 # TODO zrobić ciekawe i dogłębne README do każdego folderu
