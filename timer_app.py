@@ -1,5 +1,6 @@
 
 # TODO opisy aplikacji
+# TODO w zmianie nazwy aktywnosci dodać sprawdzanie czy podana nazwa nie jest już w bazie
 # TODO naprawić w summary pasek ilości czasu (?)
 # TODO pomyśleć o przenoszeniu aktywnosci między dniami (po 24), można dodac sprawdzanie po wypisaniu aktualnych
 # TODO zapisać kolory główne aplikacji w osobnym pliku json i dodać możliwosć zmiany ich w settings
@@ -11,6 +12,7 @@
 # TODO zobaczyć czy świerzo otwarty kalendarz mozna ustawić na odpowiedniej godzinie
 # TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp) (zrobic prosty gdzie wpisuje się minuty)
 # TODO wyjść z wersji testowej calendar api
+# TODO zrobić ciekawe i dogłębne README do każdego folderu
 
 import tkinter as tk
 from pandas import read_sql_query
@@ -45,8 +47,16 @@ class TimerApp():
         
         #| Global Variables
         self.conn = connect('DB\\sqlite.db')
-        self.default_window_shift = f"+{self.root.winfo_screenwidth() // 3}+{self.root.winfo_screenheight() // 5}"
+        """Connection with sqlite database"""
+        divided_width = self.root.winfo_screenwidth() // 3
+        divided_height = self.root.winfo_screenheight() // 5
+        self.default_window_shift = f"+{divided_width}+{divided_height}"
+        """Determines the default position of the root window """
         self.was_fullscreen = False
+        """
+        Bool, changed if the window was set to fullscree.
+        Helps determine whether the default window position should be set
+        """
         
         self.root.geometry('1x1' + self.default_window_shift)
         self.open_menu()
@@ -56,6 +66,7 @@ class TimerApp():
         self.conn.close()
         
     def clear_window(self):
+        """Destroy all widgets from window(Frame)"""
         for widget in self.window.winfo_children(): 
                 widget.destroy()
         try:
@@ -64,13 +75,22 @@ class TimerApp():
             pass
     
     def fetch_dfs(self):
+        """
+        Fetchs db, store results in instance variable.
+        df_data[
+            data.date, data.start_time, data.main_time,
+            data.break_time, data.desc, activities.name AS activity
+        ]
+        df_activity[activities.name, activities.bg, activities.fg, activities.id]
+        """
         self.df_data = read_sql_query(
-            'SELECT data.date, data.start_time, data.main_time, data.break_time, data.desc, activities.name AS activity '
+            'SELECT data.date, data.start_time, data.main_time, '
+            'data.break_time, data.desc, activities.name AS activity '
             'FROM data '
             'JOIN activities ON data.activity = activities.id',
             self.conn
         )
-        self.df_activity = read_sql_query('SELECT name, bg, fg, id FROM activities', self.conn)    
+        self.df_activity = read_sql_query('SELECT name, bg, fg, id FROM activities', self.conn)
     
     def open_menu(self):
         CreateMenu(self)
@@ -88,9 +108,7 @@ class TimerApp():
         OpenEventToplevel(self, arg)
     
     def change_color(self):
-        """
-        Changes bg and fg color for app
-        """
+        """Switches the application's color scheme between light and dark modes"""
         if TimerApp.BGCOLOR == '#2a2a2a':
             #| switch to ligth mode
             TimerApp.BGCOLOR = '#ededed' # background color
@@ -108,7 +126,7 @@ class TimerApp():
     def open_settings(self):
         CrateSettings(self)
     
-    def append_to_google_calendar(self, name: str, date: str, start_time: str, duration: int, desc: str):
+    def append_to_google_calendar(self, name: str, date: str, start_time: str, duration: int, desc: str) -> tuple[int, str]:
         return add_to_google_calendar(name, date, start_time, duration, desc)
 
 if __name__=="__main__":

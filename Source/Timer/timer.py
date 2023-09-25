@@ -11,9 +11,11 @@ if TYPE_CHECKING:
 
 class CreateTimer:
     """
-    Creates main timer, checkbutton, exit button, break timer and currnet break timer.
-    Normally main timer counts down the time,but then checkbutton is unclicked break timer and currnet break timer starts counts.
-    Break timer stores time of sum of all 'breaks' and current break timer stores time of current break.
+    Creates main timer, checkbutton, exit button, break timer and currnet break timer.\n
+    Normally main timer counts down the time,
+    but then checkbutton is unclicked break timer and currnet break timer starts counts.\n
+    Break timer stores time of sum of all 'breaks' 
+    and current break timer stores time of current break.
     """
     def __init__(self, App: 'TimerApp') -> None:
         self.App = App
@@ -24,22 +26,17 @@ class CreateTimer:
         self.start_time = datetime.now()
         self.App.root.geometry("300x200")
         
-        #| main_time stores the time (in sec)
+        #| Time stores int representing seconds
+        #| Timer stores formated time representing Hour:Minute:Second (H:MM:SS)
         self.main_time = tk.IntVar(value=0)
-        #| main_timer stores formated main_time (H:M:S)
         self.main_timer = tk.StringVar()
-        #| is_running indicates wich time should be updated (main_time or break_time)
-        self.is_running = tk.IntVar(value=1)
-        #| button_text stores STOP or START
-        self.button_text = tk.StringVar(value="STOP")
-        #| break_time stores the time of summ of breaks (in sec)
         self.break_time = tk.IntVar(value=0)
-        #| break_timer stores formated break_time (H:M:S)
         self.break_timer = tk.StringVar()
-        #| current_break_time stores the time of current break (in sec)
         self.current_break_time = tk.IntVar(value=0)
-        #| current_break_timer stores formated current_break_time (H:M:S)
         self.current_break_timer = tk.StringVar()
+        
+        self.is_running = tk.IntVar(value=1)
+        self.button_text = tk.StringVar(value="STOP")
         
         tk.Label(
             self.App.window, 
@@ -118,8 +115,8 @@ class CreateTimer:
     
     def time_loop(self):
         """
-        Loop
-        Checks if update main timer or stop timer and updates it
+        Loop.\n
+        Checks IF is_running THEN update main timer ELSE update stop timer
         """        
         if self.is_running.get():
             self.button_text.set("STOP")
@@ -133,7 +130,7 @@ class CreateTimer:
     
     def update(self, time: tk.IntVar, timer: tk.StringVar) -> tuple[tk.IntVar, tk.StringVar]:
         """
-        Updates given time and return new time value and string timer to display
+        Adds 1 to given time and return updated time (int) and new timer (H:MM:SS)
         """
         time.set(time.get() + 1)
         seconds = time.get()
@@ -142,8 +139,11 @@ class CreateTimer:
     
     def open_save_window(self):
         """
-        Opens a window with labels showing times in session, textbox to enter desc, combobox to pick activity and save button.
-        Save button appends [date, start_time, main_time, break_time, desc and activity number] to DB.data.
+        Opens a TopLevel window with labels showing times in session,
+        textbox to enter desc, combobox to pick activity and save button.\n
+        Save button appends [
+            date, start_time, main_time, break_time, desc and activity number
+        ] to DB.data
         """
         self.App.window.after_cancel(self.App.loop_id)
         self.save_window = tk.Toplevel(self.App.root)
@@ -239,9 +239,7 @@ class CreateTimer:
         return t[t.index('+')::]
     
     def save_and_quit(self):
-        """
-        Saves data and destroys window
-        """
+        """Saves data to DB and destroys TopLevel window"""
         picked_activity = self.activities_cbox.get().upper() if self.activities_cbox.get() else 'SOMETHING'
         
         #| If picked activity isn't in activities, takes inputs about bgcolor and fgcolor then append to activities db [name,bg,fg]

@@ -10,14 +10,19 @@ if TYPE_CHECKING:
     from timer_app import TimerApp
 
 class CreateSummary:
+    """
+    Creates list of buttons, each button representing diffrent activity from DB.\n
+    Each button creates:
+        - button that returns to previous list
+        - summary of picked activity [sum, mean, max]
+        - buttons that modify picked activity & combobox with time range selection
+        - list of action from that activity from selected time period
+    """
     def __init__(self, App: 'TimerApp') -> None:
         self.App = App
         self.main()
         
     def main(self):
-        """
-        TODO
-        """
         self.App.clear_window()
         self.App.was_fullscreen = True
         self.App.root.geometry(f"{self.App.root.winfo_screenwidth()}x{self.App.root.winfo_screenheight()}+0+0")
@@ -32,9 +37,10 @@ class CreateSummary:
             self.content.rowconfigure(i, weight=1, uniform='group1')
         self.content.pack(fill='both', expand=True)
         
-        self.buttons_generator()
+        self.create_buttons()
     
     def fetch_dfs_with_range(self):
+        """Apllies time range to df from self.App.fetch_dfs()"""
         self.App.fetch_dfs()
         if self.time_range:
             offset = [0, 7, 30, 90, 365]
@@ -44,12 +50,14 @@ class CreateSummary:
             self.App.df_data['date'] = self.App.df_data['date'].dt.date
     
     def clear(self):
+        """Destroy all widgets from content(Frame)"""
         for widget in self.content.winfo_children(): 
             widget.destroy()
     
-    def buttons_generator(self):
+    def create_buttons(self):
         """
-        Draws buttons corresponding to each activity, click returns summary
+        Draws buttons, each button corresponds to diffrent activity.\n
+        Button click calls create_summary with corresponding activity
         """
         self.clear()
         for i, (activity, bg_color, fg_color, id) in enumerate(self.App.df_activity.values.tolist()):
@@ -61,12 +69,16 @@ class CreateSummary:
                 activebackground = fg_color,
                 activeforeground = bg_color,
                 text = activity,
-                command=lambda x = [activity, bg_color, fg_color, id]: self.generate_summary(x)
+                command=lambda x = [activity, bg_color, fg_color, id]: self.create_summary(x)
             ).grid(row=i, sticky='nsew')
     
-    def generate_summary(self, arg: list[str]):
+    def create_summary(self, arg: list[str]):
         """
-        Draws a summary for the selected activity
+        Creates:
+        - button that returns to previous list
+        - summary of picked activity [sum, mean, max]
+        - buttons that modify picked activity & combobox with time range selection
+        - list of action from that activity from selected time period
         """
         self.clear()
         self.activity, self.bg_color, self.fg_color, self.id = arg
@@ -84,7 +96,7 @@ class CreateSummary:
             activeforeground = self.App.FGCOLOR,
             font = ('calibri',15),
             text = "⭮",
-            command = self.buttons_generator
+            command = self.create_buttons
         ).pack(fill='both', expand=True)
 
         #* Summary of picked action
@@ -207,7 +219,7 @@ class CreateSummary:
         def change_time_range(*args):
             self.time_range = self.range_optionts.index(picked_range.get())
             self.fetch_dfs_with_range()
-            self.generate_summary(arg)
+            self.create_summary(arg)
         
         picked_range = tk.StringVar(value=self.range_optionts[self.time_range])
         picked_range.trace('w', change_time_range)
@@ -275,6 +287,11 @@ class CreateSummary:
             ).grid(column=1, row=i, sticky='w', padx=(0,10))
     
     def change_color(self):
+        """
+        Change color of picked activity.\n
+        Opens 2 tk.askcolor windows, one for background color, 
+        second for foreground color.
+        """
         new_bg_color = askcolor(title="Background color", color=self.bg_color)[1]
         new_fg_color = askcolor(title="Foreground color", color=self.fg_color)[1]
         
@@ -289,10 +306,15 @@ class CreateSummary:
             )
         self.App.conn.commit()
         self.fetch_dfs_with_range()
-        self.buttons_generator()
+        self.create_buttons()
     
     def change_name(self):
+        """
+        Change name of picked activity.\n
+        Opens window with text entry for new name and button to save new name
+        """
         def submit_new_name():
+            """Modify name of picked activity"""
             cursor = self.App.conn.cursor()
             if new_name.get():
                 cursor.execute(
@@ -300,7 +322,7 @@ class CreateSummary:
                 )
             self.App.conn.commit()
             self.fetch_dfs_with_range()
-            self.buttons_generator()
+            self.create_buttons()
             
         change_name_window = tk.Toplevel(self.mid_frame)
         change_name_window.title('Change name')
@@ -319,7 +341,16 @@ class CreateSummary:
         ).pack()
     
     def delete_activity(self):
+        """
+        Deletes picked activity.\n
+        Opens messagebox with yes/no question to confirm removal.\n
+        Opens a window with the choice of whether to delete all data or move it to another activity.
+        """
         def change_activity_in_data(*args):
+            """
+            Changes the activity for all actions from deleted to newly selected then
+            deletes activity
+            """
             update_id = read_sql_query(f'SELECT id FROM activities WHERE name = "{picked_activity.get()}"', self.App.conn).iloc[0, 0]
             del_id = read_sql_query(f'SELECT id FROM activities WHERE name = "{self.activity}"', self.App.conn).iloc[0, 0]
             curr = self.App.conn.cursor()
@@ -330,6 +361,7 @@ class CreateSummary:
             self.App.open_menu()
         
         def delete_data():
+            """Deletes activity and all actions with this activity"""
             id_number = read_sql_query(f'SELECT id FROM activities WHERE name = "{self.activity}"', self.App.conn).iloc[0, 0]
             curr = self.App.conn.cursor()
             curr.execute(f'DELETE FROM data WHERE activity = "{id_number}"')

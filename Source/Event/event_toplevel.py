@@ -11,15 +11,17 @@ if TYPE_CHECKING:
 
 class OpenEventToplevel:
     """
-    Opens new window with picked action data.
-    arg: [data.date, data.start_time, data.main_time, data.break_time, data.desc, activities.name] [activities.name, activities.bg, activities.fg]
+    Opens new window with picked action data.\n
+    Takes as args: [
+        data.date, data.start_time, data.main_time, data.break_time, data.desc, activities.name] [activities.name, activities.bg, activities.fg
+    ]\n
+    Show information about action and buttons to modify that data
     """
     def __init__(self, App: 'TimerApp', arg: list[list, list]) -> None:
         self.App = App
         self.main(arg)
     
     def main(self, arg: list[list, list]): 
-        
         self.action, self.activity = arg
         self.action_window = tk.Toplevel(self.App.root)
         self.action_window.resizable(False, False)
@@ -118,10 +120,12 @@ class OpenEventToplevel:
         ).grid(column=1, row=1, sticky='nwes')
     
     def clear(self):
+        """Destroy widgets from action_window"""
         for widget in self.action_window.winfo_children(): 
             widget.destroy()        
 
     def change_desc(self):
+        """Creates text box and button witch call save_new_desc"""
         self.clear()
         
         self.new_desc = tk.Text(
@@ -162,6 +166,10 @@ class OpenEventToplevel:
         ).pack(side='left')
             
     def save_new_desc(self):
+        """
+        Gets new description from text box and save it for picked action.\n
+        Destroy event window and opens menu.
+        """
         input_desc = self.new_desc.get('1.0', 'end-1c')
         if input_desc != self.action[4]:
             cur = self.App.conn.cursor()
@@ -174,6 +182,9 @@ class OpenEventToplevel:
         self.App.open_menu()
     
     def change_activity(self):
+        """
+        Creates combobox with activities and button witch call save_new_activity
+        """
         self.clear()
         
         activities_values = self.App.df_activity['name'].tolist()
@@ -192,6 +203,12 @@ class OpenEventToplevel:
         ).pack()
         
     def save_new_activity(self):
+        """
+        Gets new activity from combobox and save it for picked action.\n
+        If new activity isn't in DB.activities appends it.
+        (Opens tk.askcolor to pick backgroud and foreground color)\n
+        Destroy event window and opens menu.
+        """
         picked_activity = self.activities_cbox.get().upper()
         if picked_activity and picked_activity != self.activity[0]:
             if not self.App.df_activity['name'].isin([picked_activity]).any():
@@ -224,6 +241,12 @@ class OpenEventToplevel:
         self.App.open_menu()
         
     def delete(self):
+        """
+        Opens yes/no messagebox.\n
+        If yes then:
+            - deletes action from DB
+            - destroy event window and opens menu.
+        """
         if messagebox.askyesno("Delete", f"are you sure you want to delete\n'{self.action[5]}' from {self.action[0]} {self.action[1]}", parent=self.action_window):
             curr = self.App.conn.cursor()
             curr.execute(
@@ -234,8 +257,10 @@ class OpenEventToplevel:
             self.action_window.destroy()
             self.App.open_menu()
             
-    
     def google_calendar(self):
+        """
+        Calls append_to_google_calendar, opens messagebox with results
+        """
         is_succes, res = self.App.append_to_google_calendar(
             self.action[5], self.action[0], self.action[1], int(self.action[2]) + int(self.action[3]), self.action[4]
         )

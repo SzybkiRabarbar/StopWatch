@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 class CreateCalendar:
     """
-    Creates calendar and daily activity list.
+    Creates calendar and daily activity list.\n
     Daily activity list depends on date selected in the calendar.
     """    
     def __init__(self, App: 'TimerApp') -> None:
@@ -23,12 +23,12 @@ class CreateCalendar:
         today = datetime.now()
         y, m, d = today.year, today.month, today.day
 
-        #| CALENDAR
-        #| creates calendar with events
+        #| Calendar
         self.cal = tkc.Calendar(self.App.window, selectmode='day', year=y, month=m, day=d, date_pattern='y-mm-dd')
         
         self.App.fetch_dfs()
         
+        #| Adds event to calendar
         for action in self.App.df_data.values.tolist():
             date = datetime.strptime(action[0], '%Y-%m-%d')
             self.cal.calevent_create(date, action[5], action[5])
@@ -39,8 +39,7 @@ class CreateCalendar:
             self.cal.tag_config(activity[0], background=activity[1], foreground=activity[2])
         self.cal.pack(pady=(20,5))
         
-        #| CONTENT
-        
+        #| Calendar List
         self.content_title = tk.Label(
             self.App.window,
             font = (self.App.FONTF, 15),
@@ -87,7 +86,7 @@ class CreateCalendar:
         
     def grab_date_loop(self):
         """
-        Loop
+        Loop\n
         Grabs date from calendar, call print_data func
         """
         if self.picked_date != self.cal.get_date():
