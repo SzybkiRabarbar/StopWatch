@@ -1,16 +1,14 @@
 
-# TODO naprawić w summary pasek ilości czasu (?)
-#// TODO zobaczyć czy świerzo otwarty kalendarz mozna ustawić na odpowiedniej godzinie
-# TODO zapisać kolory główne aplikacji w osobnym pliku json i dodać możliwosć zmiany ich w settings
-    #* to samo z fontem
 # TODO pomyśleć o dodawaniu nowego kalendarza do GCalendar, zamiast dodawać do głównego
     #* tworzenie kalendarza
     #* dodawania do stworzonego kalendarza
 # TODO naprawić bład 500
+# TODO pomyśleć o zmianie kolorów top bara (restart aplikacji)
 # TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp) (zrobic prosty gdzie wpisuje się minuty)
 # TODO wyjść z wersji testowej calendar api
 # TODO zrobić ciekawe i dogłębne README do każdego folderu
 
+import json
 import tkinter as tk
 from pandas import read_sql_query
 from sqlite3 import connect
@@ -26,19 +24,13 @@ from Source.GoogleCalendar.google_cal import add_to_google_calendar
 
 class TimerApp():
     
-    EFFECTSCOLOR = '#3f3f3f' # button color effects in the title bar
-    BARCOLOR = '#151515' # title bar color
-    
-    FONTF = 'Ariel' # main font
-    BGCOLOR = '#2a2a2a' # background color
-    MIDCOLOR = '#545454' # shade between bg and fg
-    FGCOLOR = '#ededed' # text color
     MODESIGN = '◑'
 
     def __init__(self) -> None:
+        self.load_pallete()
         self.root = tk.Tk()
         self.root.title('Timer')
-        self.window = tk.Frame(self.root, bg=TimerApp.BGCOLOR,highlightthickness=0)
+        self.window = tk.Frame(self.root, bg=self.BGCOLOR,highlightthickness=0)
         CreateTitleBar(self)
         self.root.resizable(False, False)
         
@@ -61,7 +53,21 @@ class TimerApp():
     def run(self):
         self.root.mainloop()
         self.conn.close()
+    
+    def load_pallete(self):
+        with open('DB\\palette.json', 'r') as file:
+            palette = json.load(file)
         
+        self.BARFGC = palette['BARFGC']    
+        self.EFFECTSCOLOR = palette['EFFECTSCOLOR']
+        self.BARBGC = palette['BARBGC']
+        self.FONTF = palette['FONTF']
+        
+        self.PREVIOUS = palette['PREVIOUS']
+        self.BGCOLOR = palette[self.PREVIOUS]['BGCOLOR']
+        self.MIDCOLOR = palette[self.PREVIOUS]['MIDCOLOR']
+        self.FGCOLOR = palette[self.PREVIOUS]['FGCOLOR']
+    
     def clear_window(self):
         """Destroy all widgets from window(Frame)"""
         for widget in self.window.winfo_children(): 
@@ -106,18 +112,26 @@ class TimerApp():
     
     def change_color(self):
         """Switches the application's color scheme between light and dark modes"""
-        if TimerApp.BGCOLOR == '#2a2a2a':
+        if self.PREVIOUS == '1':
             #| switch to ligth mode
-            TimerApp.BGCOLOR = '#ededed' # background color
-            TimerApp.MIDCOLOR = '#a9a9a9'
-            TimerApp.FGCOLOR = '#2a2a2a' # text color
-            TimerApp.MODESIGN = '◐'
+            self.PREVIOUS = '0'
+            self.MODESIGN = '◐'
         else:
             #| switch to dark mode
-            TimerApp.BGCOLOR = '#2a2a2a' # background color
-            TimerApp.MIDCOLOR = '#545454'
-            TimerApp.FGCOLOR = '#ededed' # text color
-            TimerApp.MODESIGN = '◑'
+            self.PREVIOUS = '1'
+            self.MODESIGN = '◑'
+        
+        with open('DB\\palette.json', 'r') as file:
+            palette = json.load(file)
+        
+        self.BGCOLOR = palette[self.PREVIOUS]['BGCOLOR']
+        self.MIDCOLOR = palette[self.PREVIOUS]['MIDCOLOR']
+        self.FGCOLOR = palette[self.PREVIOUS]['FGCOLOR']
+        palette['PREVIOUS'] = self.PREVIOUS
+        
+        with open('DB\\palette.json', 'w') as file:
+            json.dump(palette, file, ensure_ascii=False, indent=4)
+        
         self.open_menu()
     
     def open_settings(self):
@@ -129,3 +143,22 @@ class TimerApp():
 if __name__=="__main__":
     t = TimerApp()
     t.run()
+
+"""
+{
+    "PREVIOUS": "1",
+    "FONTF": "Ariel",
+    "EFFECTSCOLOR": "#3f3f3f",
+    "BARCOLOR": "#151515",
+    "0": {
+        "BGCOLOR": "#ededed",
+        "MIDCOLOR": "#a9a9a9",
+        "FGCOLOR": "#2a2a2a"
+    },
+    "1": {
+        "BGCOLOR": "#2a2a2a",
+        "MIDCOLOR": "#545454",
+        "FGCOLOR": "#ededed" 
+    }
+}
+"""

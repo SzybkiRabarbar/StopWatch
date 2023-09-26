@@ -1,0 +1,17 @@
+{
+    "PREVIOUS": "1",
+    "FONTF": "Ariel",
+    "BARFGC": "#9caab3",
+    "EFFECTSCOLOR": "#3f3f3f",
+    "BARBGC": "#151515",
+    "0": {
+        "BGCOLOR": "#ededed",
+        "MIDCOLOR": "#a9a9a9",
+        "FGCOLOR": "#2a2a2a"
+    },
+    "1": {
+        "BGCOLOR": "#2a2a2a",
+        "MIDCOLOR": "#545454",
+        "FGCOLOR": "#ededed"
+    }
+}

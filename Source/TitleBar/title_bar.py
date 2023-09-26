@@ -23,7 +23,7 @@ class CreateTitleBar:
         self.App.root.maximized = False # only to know if root is maximized
 
         self.App.root.config(bg="#25292e")
-        title_bar = tk.Frame(self.App.root, bg=self.App.BARCOLOR, relief='raised', bd=0,highlightthickness=0)
+        title_bar = tk.Frame(self.App.root, bg=self.App.BARBGC, relief='raised', bd=0,highlightthickness=0)
 
         def set_appwindow(mainWindow): # to display the window icon on the taskbar, 
                                     # even when using root.overrideredirect(True
@@ -54,10 +54,10 @@ class CreateTitleBar:
                 self.App.root.minimized = False                              
 
         # put a close button on the title bar
-        self.close_button = tk.Button(title_bar, text='  ×  ', command=lambda: [self.App.root.destroy()],bg=self.App.BARCOLOR,padx=2,pady=2,font=("calibri", 13),bd=0,fg=self.App.FGCOLOR,highlightthickness=0)
-        self.return_button = tk.Button(title_bar, text=' ⟲ ', command=self.App.open_menu,bg=self.App.BARCOLOR,padx=2,pady=2,bd=0,fg=self.App.FGCOLOR,font=("calibri", 13),highlightthickness=0)
-        self.minimize_button = tk.Button(title_bar, text=' 🗕 ',command=minimize_me,bg=self.App.BARCOLOR,padx=2,pady=2,bd=0,fg=self.App.FGCOLOR,font=("calibri", 13),highlightthickness=0)
-        title_bar_title = tk.Label(title_bar, text='TimerApp', bg=self.App.BARCOLOR,bd=0,fg=self.App.FGCOLOR,font=("helvetica", 10),highlightthickness=0)
+        self.close_button = tk.Button(title_bar, text='  ×  ', command=lambda: [self.App.root.destroy()],bg=self.App.BARBGC,padx=2,pady=2,font=("calibri", 13),bd=0,fg=self.App.BARFGC,highlightthickness=0)
+        self.return_button = tk.Button(title_bar, text=' ⟲ ', command=self.App.open_menu,bg=self.App.BARBGC,padx=2,pady=2,bd=0,fg=self.App.BARFGC,font=("calibri", 13),highlightthickness=0)
+        self.minimize_button = tk.Button(title_bar, text=' 🗕 ',command=minimize_me,bg=self.App.BARBGC,padx=2,pady=2,bd=0,fg=self.App.BARFGC,font=("calibri", 13),highlightthickness=0)
+        title_bar_title = tk.Label(title_bar, text='TimerApp', bg=self.App.BARBGC,bd=0,fg=self.App.BARFGC,font=("helvetica", 10),highlightthickness=0)
 
         # pack the widgets
         title_bar.pack(fill='x')
@@ -73,19 +73,19 @@ class CreateTitleBar:
             self.close_button['bg']='red'
             
         def returnx_to_normalstate(event):
-            self.close_button['bg']=self.App.BARCOLOR
+            self.close_button['bg']=self.App.BARBGC
             
         def change_size_on_hovering(event):
             self.return_button['bg']=self.App.EFFECTSCOLOR
             
         def return_size_on_hovering(event):
-            self.return_button['bg']=self.App.BARCOLOR
+            self.return_button['bg']=self.App.BARBGC
             
         def changem_size_on_hovering(event):
             self.minimize_button['bg']=self.App.EFFECTSCOLOR
             
         def returnm_size_on_hovering(event):
-            self.minimize_button['bg']=self.App.BARCOLOR
+            self.minimize_button['bg']=self.App.BARBGC
             
         def get_pos(event): # this is executed when the title bar is clicked to move the window
             if self.App.root.maximized == False:
