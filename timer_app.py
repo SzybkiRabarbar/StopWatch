@@ -1,8 +1,6 @@
 
-#// TODO w zmianie nazwy aktywnosci dodać sprawdzanie czy podana nazwa nie jest już w bazie
-#// TODO pomyśleć o przenoszeniu aktywnosci między dniami (po 24), można dodac sprawdzanie po wypisaniu aktualnych
 # TODO naprawić w summary pasek ilości czasu (?)
-# TODO zobaczyć czy świerzo otwarty kalendarz mozna ustawić na odpowiedniej godzinie
+#// TODO zobaczyć czy świerzo otwarty kalendarz mozna ustawić na odpowiedniej godzinie
 # TODO zapisać kolory główne aplikacji w osobnym pliku json i dodać możliwosć zmiany ich w settings
     #* to samo z fontem
 # TODO pomyśleć o dodawaniu nowego kalendarza do GCalendar, zamiast dodawać do głównego

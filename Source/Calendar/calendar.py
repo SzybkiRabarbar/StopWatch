@@ -92,10 +92,10 @@ class CreateCalendar:
         if self.picked_date != self.cal.get_date():
             self.picked_date = self.cal.get_date()
             self.content_title.config(text=self.cal.get_date())
-            self.print_data()
+            self.create_grid_with_data()
         self.loop_id = self.App.window.after(100, self.grab_date_loop)
             
-    def print_data(self):
+    def create_grid_with_data(self):
         """
         Create grid with timestaps and actions from picked date 
         """        
@@ -158,6 +158,7 @@ class CreateCalendar:
             
             #| Moves scrollbar to first action
             if t == 24:
+                self.calendar_canvas.update_idletasks()
                 self.calendar_canvas.yview_moveto(str(float((start_time // 4) / 24)))
                 t += 1
                 
@@ -166,7 +167,7 @@ class CreateCalendar:
     def check_previous_day(self):
         """
         Checks if last action from previous day passed to the next day
-        If passed THEN call print_previous_day_action
+        If passed THEN call append_last_action_to_grid()
         """
         previous_day_date = datetime.strptime(self.picked_date, '%Y-%m-%d') - timedelta(days=1)
         previous_day_date = previous_day_date.strftime('%Y-%m-%d')
@@ -181,9 +182,9 @@ class CreateCalendar:
             
             #| check if passed
             if la_end_date.day > la_start_date.day:
-                self.print_previous_day_action(last_action, la_end_date)
+                self.append_last_action_to_grid(last_action, la_end_date)
     
-    def print_previous_day_action(self, last_action: list, la_end_date: datetime):
+    def append_last_action_to_grid(self, last_action: list, la_end_date: datetime):
         """Append last action from previous day to content grid"""
         duration_time = la_end_date - la_end_date.replace(hour=0, minute=0, second=0)
         duration = int(((duration_time.total_seconds()) / 60) // 15)
