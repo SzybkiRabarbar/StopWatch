@@ -75,17 +75,16 @@ class CreateSummary:
     def create_summary(self, arg: list[str]):
         """
         Creates:
-        - button that returns to previous list
+        - button that returns to previous list (call create_buttons)
         - summary of picked activity [sum, mean, max]
-        - buttons that modify picked activity & combobox with time range selection
-        - list of action from that activity from selected time period
+        - buttons that modify picked activity and combobox with time range selection
+        - list of action from that activity from selected time period (button and bar informing about the time spent)
         """
         self.clear()
         self.activity, self.bg_color, self.fg_color, self.id = arg
         
         #* HEEDER BUTTON
-        #| Calls buttons_generator
-        
+        #| Button that returns to previous list (call create_buttons)
         top_bar = tk.Frame(self.content)
         top_bar.pack(fill='x')
         tk.Button(
@@ -99,8 +98,8 @@ class CreateSummary:
             command = self.create_buttons
         ).pack(fill='both', expand=True)
 
-        #* Summary of picked action
-        
+        #* SUMMARY GRID
+        #| Summary of picked activity [sum, mean, max]
         up_data_grid = tk.Frame(self.content)
         up_data_grid.config(background=self.App.BGCOLOR)
         up_data_grid.pack()
@@ -172,7 +171,7 @@ class CreateSummary:
         ).pack(fill='x', pady=20)
         
         #* MIDDLE BUTTONS
-        
+        #| Buttons that modify picked activity and combobox with time range selection
         self.mid_frame = tk.Frame(self.content, background=self.App.BGCOLOR)
         self.mid_frame.pack()
         
@@ -243,48 +242,61 @@ class CreateSummary:
         ).pack(fill='x', pady=20)
         
         #* BOTTOM
-        #| Draws data in scrollable canvas
+        #| List of action from that activity from selected time period (button and bar informing about the time spent)
         outer_frame = tk.Frame(self.content)
         outer_frame.pack(padx=10, pady=10, fill='both', expand=True)
 
-        summary_canvas = tk.Canvas(outer_frame, background=self.bg_color, highlightthickness=1, highlightbackground=self.bg_color)
-        inner_frame = tk.Frame(summary_canvas, background=self.bg_color)
-        inner_frame.columnconfigure(1, weight=1)
-        scrollbar = tk.Scrollbar(outer_frame, orient="vertical", command=summary_canvas.yview)
+        self.summary_canvas = tk.Canvas(outer_frame, background=self.bg_color, highlightthickness=1, highlightbackground=self.bg_color)
+        self.inner_frame = tk.Frame(self.summary_canvas, background=self.bg_color)
+        self.inner_frame.columnconfigure(1, weight=1)
+        scrollbar = tk.Scrollbar(outer_frame, orient="vertical", command=self.summary_canvas.yview)
 
-        summary_canvas.configure(yscrollcommand=scrollbar.set)
+        self.summary_canvas.configure(yscrollcommand=scrollbar.set)
 
         scrollbar.pack(side="right", fill="y")
-        summary_canvas.pack(side="left", fill="both", expand=True)
-        canvas_frame = summary_canvas.create_window((0, 0), window=inner_frame, anchor="nw")
+        self.summary_canvas.pack(side="left", fill="both", expand=True)
+        canvas_frame = self.summary_canvas.create_window((0, 0), window=self.inner_frame, anchor="nw")
 
         def onFrameConfigure(event):
-            summary_canvas.configure(scrollregion=summary_canvas.bbox("all"))
-        inner_frame.bind("<Configure>", onFrameConfigure)
+            self.summary_canvas.configure(scrollregion=self.summary_canvas.bbox("all"))
+        self.inner_frame.bind("<Configure>", onFrameConfigure)
         
         def onCanvasConfigure(event):
-            summary_canvas.itemconfigure(canvas_frame, width=event.width)
-        summary_canvas.bind("<Configure>", onCanvasConfigure)
+            self.summary_canvas.itemconfigure(canvas_frame, width=event.width)
+        self.summary_canvas.bind("<Configure>", onCanvasConfigure)
         
-        #| Generates labels with data
         max_value = self.App.df_data[self.App.df_data['activity'] == self.activity]['main_time'].max()
+        available_width = 0
         for i, row in enumerate(self.App.df_data[self.App.df_data['activity'] == self.activity].values.tolist()):
             #| Button opens window with chosen event
-            tk.Button(
-                inner_frame,
+            event_button = tk.Button(
+                self.inner_frame,
                 font = ('Consolas', 15),
                 text = f"{row[0]} | {row[1].rjust(8)}",
                 background = self.fg_color,
                 foreground = self.bg_color,
                 command = lambda x = [row, [self.activity, self.bg_color, self.fg_color, self.id]]: self.App.open_event(x)
-            ).grid(column=0, row=i, sticky='w', padx=10, pady=5)
-            #| Empty frame imitates 
+            )
+            event_button.grid(column=0, row=i, sticky='w', padx=10, pady=5)
+
+            if not available_width:
+                available_width = self.return_available_width(event_button)
+            
+            #| Frame acts as a bar informing about the time spent
             tk.Frame(
-                inner_frame,
+                self.inner_frame,
                 height=30,
-                width=int(row[2] / max_value * 1617),
+                width=int(row[2] / max_value * available_width),
                 background=self.fg_color
             ).grid(column=1, row=i, sticky='w', padx=(0,10))
+    
+    def return_available_width(self, button: tk.Button):
+        """
+        Returns available width value.\n
+        summary_canvas.width - event_button.width - sum of all horizontal padding (in summary_canvas)
+        """
+        self.App.root.update_idletasks()
+        return self.summary_canvas.winfo_width() - button.winfo_width() - 20
     
     def change_color(self):
         """
