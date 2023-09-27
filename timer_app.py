@@ -1,11 +1,12 @@
 
+# TODO zablokowac scrool (po pierwszysm odpaleniu)
 # TODO pomyśleć o dodawaniu nowego kalendarza do GCalendar, zamiast dodawać do głównego
     #* tworzenie kalendarza
     #* dodawania do stworzonego kalendarza
 # TODO naprawić bład 500
 # TODO pomyśleć o zmianie kolorów top bara (restart aplikacji)
 # TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp) (zrobic prosty gdzie wpisuje się minuty)
-# TODO wyjść z wersji testowej calendar api
+# TODO ogarnać credentials
 # TODO zrobić ciekawe i dogłębne README do każdego folderu
 
 import json
@@ -143,22 +144,3 @@ class TimerApp():
 if __name__=="__main__":
     t = TimerApp()
     t.run()
-
-"""
-{
-    "PREVIOUS": "1",
-    "FONTF": "Ariel",
-    "EFFECTSCOLOR": "#3f3f3f",
-    "BARCOLOR": "#151515",
-    "0": {
-        "BGCOLOR": "#ededed",
-        "MIDCOLOR": "#a9a9a9",
-        "FGCOLOR": "#2a2a2a"
-    },
-    "1": {
-        "BGCOLOR": "#2a2a2a",
-        "MIDCOLOR": "#545454",
-        "FGCOLOR": "#ededed" 
-    }
-}
-"""
