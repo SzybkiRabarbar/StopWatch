@@ -76,7 +76,8 @@ class CreateCalendar:
         
         #| Enables mousewheel
         def on_mousewheel(event):
-            self.calendar_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            if self.calendar_canvas.winfo_exists(): #| checks if canvas exists to eleminate errror _tkinter.TclError: invalid command name ".!frame.!frame6.!canvas"
+                self.calendar_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
         self.calendar_canvas.bind_all("<MouseWheel>", on_mousewheel)
         
         self.App.window.update_idletasks()
