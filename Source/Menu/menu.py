@@ -77,17 +77,17 @@ class CreateMenu:
             font = (self.App.FONTF, 40 , 'bold'),
             command=self.App.change_color
         )
-        button_change_mode.pack(side='left')
+        button_change_mode.pack(side='left', fill='y')
         
-        button_to_google = tk.Button(
+        button_to_settings = tk.Button(
             lowest_button,
             text = 'Settings',
             bg = self.App.MIDCOLOR,
             fg = self.App.FGCOLOR,
             activebackground = self.App.MIDCOLOR,
             activeforeground = self.App.BGCOLOR,
-            pady = 12,
-            font = (self.App.FONTF, 40 , 'bold'),
+            pady = 18.5,
+            font = (self.App.FONTF, 35 , 'bold'),
             command = self.App.open_settings
         )
-        button_to_google.pack(side='right', fill='x', expand=True)
+        button_to_settings.pack(side='right', fill='both', expand=True)
