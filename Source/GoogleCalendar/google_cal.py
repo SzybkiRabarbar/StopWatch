@@ -9,6 +9,17 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+def find_calendar_id(service):
+    page_token = None
+    while True:
+        calendar_list = service.calendarList().list(pageToken=page_token).execute()
+        for calendar_list_entry in calendar_list['items']:
+            if calendar_list_entry['summary'] == 'Timer':
+                return calendar_list_entry['id']
+        page_token = calendar_list.get('nextPageToken')
+        if not page_token:
+            return None
+
 # If modifying these scopes, delete the file Source\\GogleCalendar\\token.json.
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
@@ -38,6 +49,15 @@ def add_to_google_calendar(name: str, date: str, start_time: str, duration: int,
 
     try:
         service = build('calendar', 'v3', credentials=creds)
+        
+        id = find_calendar_id(service)
+        if not id:
+            calendar = {
+                'summary': 'Timer'
+            }
+            created_calendar =service.calendars().insert(body=calendar).execute()
+            id = created_calendar['id']
+
         end = (datetime.strptime(date + ' ' + start_time, '%Y-%m-%d %H:%M:%S') + timedelta(seconds=duration)).strftime('%Y-%m-%dT%H:%M:%S')
         event = {
         'summary': name,
@@ -50,7 +70,7 @@ def add_to_google_calendar(name: str, date: str, start_time: str, duration: int,
         },
         }
 
-        event = service.events().insert(calendarId='primary', body=event).execute()
+        event = service.events().insert(calendarId=id, body=event).execute()
         return (1, event.get('htmlLink'))
 
     except HttpError as error:

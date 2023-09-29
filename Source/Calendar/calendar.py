@@ -117,10 +117,10 @@ class CreateCalendar:
         t = 0
         for i in range(96):
             if i % 4 == 3:
-                frame = tk.Frame(self.content, highlightbackground="black", highlightthickness=1, width=50, height=1)
+                frame = tk.Frame(self.content, highlightbackground=self.App.FGCOLOR, highlightthickness=1, width=50, height=1)
                 frame.grid(row=i, column=0, sticky='s')
             elif not i % 4:
-                separator = tk.Label(self.content, text=f"{t}:00", background=self.App.MIDCOLOR, foreground='black')
+                separator = tk.Label(self.content, text=f"{t}:00", background=self.App.MIDCOLOR, foreground=self.App.FGCOLOR)
                 separator.grid(row=i, column=0)
                 t += 1
                 

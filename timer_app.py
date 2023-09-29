@@ -1,8 +1,4 @@
 
-# TODO kolor timestampów w kalendarzu
-# TODO pomyśleć o dodawaniu nowego kalendarza do GCalendar, zamiast dodawać do głównego
-    #* tworzenie kalendarza
-    #* dodawania do stworzonego kalendarza
 # TODO naprawić bład 500
 # TODO pomyśleć o zmianie kolorów top bara (restart aplikacji)
 # TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp) (zrobic prosty gdzie wpisuje się minuty)
