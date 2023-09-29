@@ -53,7 +53,7 @@ class CrateSettings:
     def button(self, text: str, method):
         tk.Button(
             self.App.window,
-            font=(self.App.FONTF, 10),
+            font=(self.App.FONTF, 15),
             background = self.App.BGCOLOR,
             foreground = self.App.FGCOLOR,
             anchor = 'w',

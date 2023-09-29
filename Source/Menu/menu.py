@@ -87,7 +87,7 @@ class CreateMenu:
             activebackground = self.App.MIDCOLOR,
             activeforeground = self.App.BGCOLOR,
             pady = 18.5,
-            font = (self.App.FONTF, 35 , 'bold'),
+            font = (self.App.FONTF, 30, 'bold'),
             command = self.App.open_settings
         )
         button_to_settings.pack(side='right', fill='both', expand=True)

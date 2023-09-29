@@ -10,6 +10,10 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 def find_calendar_id(service):
+    """
+    Iter through calendars in Google Calendar.\n
+    If calendar with name is found THEN return calendar id ELSE return None
+    """
     page_token = None
     while True:
         calendar_list = service.calendarList().list(pageToken=page_token).execute()

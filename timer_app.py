@@ -1,7 +1,6 @@
 
-# TODO naprawić bład 500
+# TODO w timerze timera dodać walidacje i powiadomienie o skończeniu czasu w timerze
 # TODO pomyśleć o zmianie kolorów top bara (restart aplikacji)
-# TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp) (zrobic prosty gdzie wpisuje się minuty)
 # TODO ogarnać credentials
 # TODO zrobić ciekawe i dogłębne README do każdego folderu
 
