@@ -67,8 +67,9 @@ def open_save_window(self: 'CreateTimer'):
         #| Takes desc
         self.text_widget = tk.Text(
             self.save_window,
-            bg = "light yellow",
-            font = ("Consolas",15),
+            background = self.App.BGCOLOR,
+            foreground = self.App.FGCOLOR,
+            font = (self.App.FONTF, 15),
             height = 5,
             width = 25,
             padx = 5,

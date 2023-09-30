@@ -1,9 +1,8 @@
 from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
-from pandas import DataFrame, read_sql_query
-from tkinter.colorchooser import askcolor
 from tkinter import messagebox
+from pygame import mixer
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -46,6 +45,7 @@ class CreateTimer:
         self.App.root.geometry("300x260")
         
         self.vars_init()
+        mixer.init()
         
         tk.Label(
             self.App.window, 
@@ -166,6 +166,8 @@ class CreateTimer:
             self.countdown_timer.set(f"{seconds // 3600}:{seconds // 60 % 60 :02d}:{seconds % 60 :02d}")
         else:
             self.countdown_timer.set('Count Down Time')
+            mixer.music.load('Other\\boom.mp3')
+            mixer.music.play(loops=0)
     
     def get_shift(self) -> str:
         """Returns current shift of root"""
@@ -216,8 +218,10 @@ class CreateTimer:
         buttons.pack(fill='x')
         
         def save_countdown_time():
-            #! Needs validation !
-            self.countdown_time.set(value=int(picked_minutes.get()) * 60)
+            if picked_minutes.get().isnumeric():
+                self.countdown_time.set(value=int(picked_minutes.get()) * 60)
+            else:
+                messagebox.showerror('Error', 'Data you entered is incorrect. You must enter the time in minutes (only numbers 0-9)')
             countdown_window.destroy()
         
         tk.Button(
