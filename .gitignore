@@ -1,7 +1,9 @@
 test/
 
+pyi_comm.txt
 credentials.json
 token.json
+Exe/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

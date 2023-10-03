@@ -1,6 +1,7 @@
 from __future__ import print_function
 
-import os.path
+from os.path import exists
+from pathlib import Path
 from datetime import datetime, timedelta
 
 from google.auth.transport.requests import Request
@@ -24,31 +25,32 @@ def find_calendar_id(service):
         if not page_token:
             return None
 
-# If modifying these scopes, delete the file Source\\GogleCalendar\\token.json.
+# If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
-def add_to_google_calendar(name: str, date: str, start_time: str, duration: int, desc: str) -> tuple[int, str]:
+def add_to_google_calendar(db_path: Path, static_path: Path, name: str, date: str, start_time: str, duration: int, desc: str) -> tuple[int, str]:
     '''
     Add action to google calendar, through google calendar api.
     Returns a tuple with int that represents whether the event was successfully added 
     and str that is either a link to the event or an error code.
     '''
     creds = None
-    # The file Source\\GogleCalendar\\token.json stores the user's access and refresh tokens, and is
+    token_path = db_path / 'token.json'
+    # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    if exists(token_path):
+        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
+                static_path / 'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open('token.json', 'w') as token:
+        with open(token_path, 'w') as token:
             token.write(creds.to_json())
 
     try:

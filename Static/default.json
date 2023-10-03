@@ -1,9 +1,9 @@
 {
     "PREVIOUS": "1",
     "FONTF": "Arial",
-    "BARFGC": "#9caab3",
-    "EFFECTSCOLOR": "#3f3f3f",
-    "BARBGC": "#151515",
+    "BARFGC": "#ffffff",
+    "EFFECTSCOLOR": "#aaaaaa",
+    "BARBGC": "#808080",
     "0": {
         "BGCOLOR": "#ededed",
         "MIDCOLOR": "#a9a9a9",

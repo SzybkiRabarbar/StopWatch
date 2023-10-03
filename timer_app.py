@@ -1,14 +1,14 @@
-
-# TODO w timerze timera dodać walidacje i powiadomienie o skończeniu czasu w timerze
-# TODO pomyśleć o zmianie kolorów top bara (restart aplikacji)
-# TODO ogarnać credentials
-# TODO zrobić ciekawe i dogłębne README do każdego folderu
-
+import sys
+from pathlib import Path
+from os import path, makedirs
 import json
 import tkinter as tk
 from pandas import read_sql_query
 from sqlite3 import connect
 
+from Source.CreateDB.create_appdata import get_appdata_folder
+from Source.CreateDB.create_palette import create_json_palette
+from Source.CreateDB.create_sqlite import create_db_sqlite
 from Source.TitleBar.title_bar import CreateTitleBar
 from Source.Menu.menu import CreateMenu
 from Source.Timer.timer import CreateTimer
@@ -18,12 +18,23 @@ from Source.Event.event_toplevel import OpenEventToplevel
 from Source.Settings.settings import CrateSettings
 from Source.GoogleCalendar.google_cal import add_to_google_calendar
 
+
 class TimerApp():
     
     MODESIGN = '◑'
 
     def __init__(self) -> None:
+        self.get_paths()
         self.load_pallete()
+        self.build_tk_root()
+        self.open_menu()
+    
+    def run(self):
+        self.root.mainloop()
+        self.conn.close()
+    
+    def build_tk_root(self):
+        """Creates and configures tk.Tk() and creates variables associated with it"""
         self.root = tk.Tk()
         self.root.title('Timer')
         self.window = tk.Frame(self.root, bg=self.BGCOLOR,highlightthickness=0)
@@ -31,7 +42,7 @@ class TimerApp():
         self.root.resizable(False, False)
         
         #| Global Variables
-        self.conn = connect('DB\\sqlite.db')
+        self.conn = connect(self.sqlite_path)
         """Connection with sqlite database"""
         divided_width = self.root.winfo_screenwidth() // 3
         divided_height = self.root.winfo_screenheight() // 5
@@ -39,19 +50,43 @@ class TimerApp():
         """Determines the default position of the root window """
         self.was_fullscreen = False
         """
-        Bool, changed if the window was set to fullscree.
+        Bool, changed if the window was set to fullscreen.
         Helps determine whether the default window position should be set
         """
-        
         self.root.geometry('1x1' + self.default_window_shift)
-        self.open_menu()
         
-    def run(self):
-        self.root.mainloop()
-        self.conn.close()
+    def get_paths(self):
+        """
+        Gets paths to statics and databases, if databases dont exists create them.\n
+        IF app is .exe THEN\n
+            sets db_path to folder in appdata and static_path to temporary folder\n
+        ELSE\n
+            sets db_path and static_path to path of the directory that the current script is in
+        """
+        if getattr(sys, 'frozen', False):
+            self.db_path = get_appdata_folder() / 'DB'
+            self.static_path = Path(sys._MEIPASS, 'Static') 
+        else:
+            self.db_path =  Path(path.dirname(path.abspath(__file__)), 'DB')
+            self.static_path = Path(path.dirname(path.abspath(__file__)), 'Static')
+        
+        self.sqlite_path = self.db_path / 'sqlite.db'
+        self.palette_json_path = self.db_path / 'palette.json'
+        self.default_json_path = self.static_path / 'default.json'
+        self.font_names_path = self.static_path / 'font_names.csv'
+        
+        if not path.exists(self.db_path):
+            makedirs(self.db_path)
+            
+        if not path.isfile(self.sqlite_path):
+            create_db_sqlite(self.sqlite_path)
+            
+        if not path.isfile(self.palette_json_path):
+            create_json_palette(self.default_json_path, self.palette_json_path)
     
     def load_pallete(self):
-        with open('DB\\palette.json', 'r') as file:
+        """Fetchs data and sets colors and font"""
+        with open(self.palette_json_path, 'r') as file:
             palette = json.load(file)
         
         self.BARFGC = palette['BARFGC']    
@@ -91,21 +126,6 @@ class TimerApp():
         )
         self.df_activity = read_sql_query('SELECT name, bg, fg, id FROM activities', self.conn)
     
-    def open_menu(self):
-        CreateMenu(self)
-        
-    def open_timer(self):
-        CreateTimer(self)
-    
-    def open_calendar(self):
-        CreateCalendar(self)
-    
-    def open_summary(self):
-        CreateSummary(self)
-    
-    def open_event(self, arg: list[list, list]):
-        OpenEventToplevel(self, arg)
-    
     def change_color(self):
         """Switches the application's color scheme between light and dark modes"""
         if self.PREVIOUS == '1':
@@ -117,7 +137,7 @@ class TimerApp():
             self.PREVIOUS = '1'
             self.MODESIGN = '◑'
         
-        with open('DB\\palette.json', 'r') as file:
+        with open(self.palette_json_path, 'r') as file:
             palette = json.load(file)
         
         self.BGCOLOR = palette[self.PREVIOUS]['BGCOLOR']
@@ -125,16 +145,38 @@ class TimerApp():
         self.FGCOLOR = palette[self.PREVIOUS]['FGCOLOR']
         palette['PREVIOUS'] = self.PREVIOUS
         
-        with open('DB\\palette.json', 'w') as file:
+        with open(self.palette_json_path, 'w') as file:
             json.dump(palette, file, ensure_ascii=False, indent=4)
         
         self.open_menu()
     
+    def open_menu(self):
+        """Calls CreateMenu"""
+        CreateMenu(self)
+        
+    def open_timer(self):
+        """Calls CreateTimer"""
+        CreateTimer(self)
+    
+    def open_calendar(self):
+        """Calls CreateCalendar"""
+        CreateCalendar(self)
+    
+    def open_summary(self):
+        """Calls CreateSummary"""
+        CreateSummary(self)
+    
+    def open_event(self, arg: list[list, list]):
+        """Calls OpenEventToplevel"""
+        OpenEventToplevel(self, arg)
+    
     def open_settings(self):
+        """Calls CrateSettings"""
         CrateSettings(self)
     
     def append_to_google_calendar(self, name: str, date: str, start_time: str, duration: int, desc: str) -> tuple[int, str]:
-        return add_to_google_calendar(name, date, start_time, duration, desc)
+        """Calls add_to_google_calendar"""
+        return add_to_google_calendar(self.db_path, self.static_path, name, date, start_time, duration, desc)
 
 if __name__=="__main__":
     t = TimerApp()

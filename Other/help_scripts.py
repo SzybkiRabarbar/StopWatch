@@ -2,23 +2,23 @@ from sqlite3 import connect
 import pandas as pd
 from datetime import datetime, timedelta
 
-def reset():
-    df_activities = pd.DataFrame({
-        'name': ['SOMETHING'],
-        'bg': ['#E952DE'],
-        'fg': ['#FFE1EA']
-    })
+# def reset(): #! outdated
+#     df_activities = pd.DataFrame({
+#         'name': ['SOMETHING'],
+#         'bg': ['#E952DE'],
+#         'fg': ['#FFE1EA']
+#     })
     
-    conn = connect('sqlite.db')
+#     conn = connect('sqlite.db')
     
-    cursor = conn.cursor()
-    cursor.execute('DELETE FROM activities')
-    cursor.execute('DELETE FROM data')
-    conn.commit()
+#     cursor = conn.cursor()
+#     cursor.execute('DELETE FROM activities')
+#     cursor.execute('DELETE FROM data')
+#     conn.commit()
     
-    df_activities.to_sql('activities', conn, if_exists='append', index=False)
+#     df_activities.to_sql('activities', conn, if_exists='append', index=False)
     
-    conn.close()
+#     conn.close()
     
 def new_test_data():
     

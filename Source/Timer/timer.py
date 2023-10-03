@@ -2,6 +2,7 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+from os import path
 from pygame import mixer
 
 from typing import TYPE_CHECKING
@@ -166,7 +167,7 @@ class CreateTimer:
             self.countdown_timer.set(f"{seconds // 3600}:{seconds // 60 % 60 :02d}:{seconds % 60 :02d}")
         else:
             self.countdown_timer.set('Count Down Time')
-            mixer.music.load('Other\\boom.mp3')
+            mixer.music.load(self.App.static_path / 'boom.mp3')
             mixer.music.play(loops=0)
     
     def get_shift(self) -> str:

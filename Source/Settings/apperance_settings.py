@@ -1,3 +1,4 @@
+# from os import path
 import tkinter as tk
 from tkinter import font
 import json
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
 
 def change_to_default(self: 'CrateSettings'):
     """Change palette.json responsible for App apperance to defult values"""
-    with open('DB\\default.json', 'r') as file:
+    with open(self.App.default_json_path, 'r') as file:
         palette = json.load(file)
 
     self.App.BARFGC = palette['BARFGC']    
@@ -25,7 +26,7 @@ def change_to_default(self: 'CrateSettings'):
     self.App.MIDCOLOR = palette['1']['MIDCOLOR']
     self.App.FGCOLOR = palette['1']['FGCOLOR']
     
-    with open('DB\\palette.json', 'w') as file:
+    with open(self.App.palette_json_path, 'w') as file:
         json.dump(palette, file, ensure_ascii=False, indent=4)
     messagebox.showinfo('Changed to default', 'Apperence settings have been hanged to default', parent=self.App.window)
     self.main()
@@ -36,11 +37,11 @@ def change_app_colors(self: 'CrateSettings'):
     frame_zero = tk.Frame(self.App.window)
     frame_one = tk.Frame(self.App.window)
     for i, frame in enumerate((frame_zero, frame_one)):
-        create_dummy_view(self.main, self.save_new_colors, str(i), frame)
+        create_dummy_view(self.App.palette_json_path, self.main, self.save_new_colors, str(i), frame)
     frame_zero.pack(fill='both', expand=True)
     frame_one.pack(fill='both', expand=True)
 
-def create_dummy_view(main, return_colors, theme: str, frame: tk.Frame, changed_colors: None | list[str] = None): 
+def create_dummy_view(path, main, return_colors, theme: str, frame: tk.Frame, changed_colors: None | list[str] = None): 
     """
     Creates a dummy view in a given frame with buttons to change the background, mid, and foreground colors.
     If colors are provided, it uses them; otherwise, it loads the colors from a JSON file.
@@ -48,22 +49,22 @@ def create_dummy_view(main, return_colors, theme: str, frame: tk.Frame, changed_
     """
     def change_bg():
         new_color = askcolor(title='')[1]
-        create_dummy_view(main, return_colors, theme, frame, [new_color, mid, fg, fontf])
+        create_dummy_view(path, main, return_colors, theme, frame, [new_color, mid, fg, fontf])
         
     def change_mid():
         new_color = askcolor(title='')[1]
-        create_dummy_view(main, return_colors, theme, frame, [bg, new_color, fg, fontf])
+        create_dummy_view(path, main, return_colors, theme, frame, [bg, new_color, fg, fontf])
         
     def change_fg():
         new_color = askcolor(title='')[1]
-        create_dummy_view(main, return_colors, theme, frame, [bg, mid, new_color, fontf])
+        create_dummy_view(path, main, return_colors, theme, frame, [bg, mid, new_color, fontf])
     
     if changed_colors:
         bg, mid, fg, fontf = changed_colors
         for widget in frame.winfo_children():
             widget.destroy()
     else:
-        with open('DB\\palette.json', 'r') as file:
+        with open(path, 'r') as file:
             palette = json.load(file)
         bg = palette[theme]['BGCOLOR']
         mid = palette[theme]['MIDCOLOR']
@@ -136,17 +137,20 @@ def save_new_colors(self: 'CrateSettings', colors: list[str]):
     """Saves the new colors chosen by the user"""
     theme, bg, mid, fg = colors
     
-    with open('DB\\palette.json', 'r') as file:
+    with open(self.App.palette_json_path, 'r') as file:
         palette = json.load(file)
     
-    self.App.BGCOLOR = bg
-    self.App.MIDCOLOR = mid
-    self.App.FGCOLOR = fg
-    palette[theme]['BGCOLOR'] = bg
-    palette[theme]['MIDCOLOR'] = mid
-    palette[theme]['FGCOLOR'] = fg
+    if bg:
+        self.App.BGCOLOR = bg
+        palette[theme]['BGCOLOR'] = bg
+    if mid:
+        self.App.MIDCOLOR = mid
+        palette[theme]['MIDCOLOR'] = mid
+    if fg:
+        self.App.FGCOLOR = fg
+        palette[theme]['FGCOLOR'] = fg
     
-    with open('DB\\palette.json', 'w') as file:
+    with open(self.App.palette_json_path, 'w') as file:
         json.dump(palette, file, ensure_ascii=False, indent=4)
         
     self.main()
@@ -203,7 +207,7 @@ def change_font(self: 'CrateSettings'):
 def create_fonts(self: 'CrateSettings'):
     """Creates buttons, each button represent diffrent font from system. On button click calls modify_json_font"""
     
-    with open('DB\\font_names.csv', 'r') as file:
+    with open(self.App.font_names_path, 'r') as file:
         reader = csv.DictReader(file)
         valid = {x['FONTNAME'] for x in reader}
     
@@ -233,13 +237,13 @@ def create_fonts(self: 'CrateSettings'):
 
 def save_new_font(self: 'CrateSettings', font_name):
     """Modify palette.json with new font for app"""
-    with open('DB\\palette.json', 'r') as file:
+    with open(self.App.palette_json_path, 'r') as file:
         palette = json.load(file)
     
     palette['FONTF'] = font_name
     self.App.FONTF = font_name
     
-    with open('DB\\palette.json', 'w') as file:
+    with open(self.App.palette_json_path, 'w') as file:
         json.dump(palette, file, ensure_ascii=False, indent=4)
     
     self.main()

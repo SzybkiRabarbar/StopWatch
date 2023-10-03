@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 def rm_token(self: 'CrateSettings'):
     """Remove token with connection with google calendar"""
     try: 
-        remove_file('token.json')
+        remove_file(self.App.db_path / 'token.json')
         messagebox.showinfo('Data removed', 'Data was removed')
     except FileNotFoundError:
         messagebox.showwarning('No data', 'Data not found')
