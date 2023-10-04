@@ -37,6 +37,7 @@ class TimerApp():
         """Creates and configures tk.Tk() and creates variables associated with it"""
         self.root = tk.Tk()
         self.root.title('Timer')
+        self.root.iconbitmap(self.static_path / 'icon.ico')
         self.window = tk.Frame(self.root, bg=self.BGCOLOR,highlightthickness=0)
         CreateTitleBar(self)
         self.root.resizable(False, False)

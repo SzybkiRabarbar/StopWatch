@@ -327,19 +327,24 @@ class CreateSummary:
         """        
         change_name_window = tk.Toplevel(self.mid_frame)
         change_name_window.title('Change name')
+        change_name_window.iconbitmap(self.App.static_path / 'icon.ico')
+        change_name_window.config(background=self.App.BGCOLOR)
+        change_name_window.geometry(self.App.default_window_shift)
         self.new_name = tk.StringVar()
         self.new_name.set(self.activity)
         tk.Entry(
             change_name_window,
-            font=('Ariel', 15),
-            textvariable=self.new_name
-        ).pack()
+            font = ('Ariel', 15),
+            textvariable = self.new_name
+        ).pack(padx=10)
         tk.Button(
             change_name_window,
-            font=('Ariel', 15),
-            text='Change name',
-            command=self.submit_new_name
-        ).pack()
+            background = self.App.BGCOLOR,
+            foreground = self.App.FGCOLOR,
+            font = ('Ariel', 15),
+            text = 'Change name',
+            command = self.submit_new_name
+        ).pack(padx=10, fill='x', expand=True)
     
     def submit_new_name(self):
         """Modify name of picked activity"""
@@ -402,6 +407,7 @@ class CreateSummary:
             pick_new_activity.resizable(False, False)
             pick_new_activity.attributes('-topmost', 'true')
             pick_new_activity.title(self.activity)
+            pick_new_activity.iconbitmap(self.App.static_path / 'icon.ico')
             pick_new_activity.geometry(self.App.default_window_shift)
             pick_new_activity.config(background=self.App.MIDCOLOR)
             

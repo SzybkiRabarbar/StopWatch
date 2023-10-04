@@ -1,6 +1,8 @@
 test/
 credentials.json
 token.json
+Exe/
+Icon/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -24,6 +24,7 @@ class OpenEventToplevel:
     def main(self, arg: list[list, list]): 
         self.action, self.activity = arg
         self.action_window = tk.Toplevel(self.App.root)
+        self.action_window.iconbitmap(self.App.static_path / 'icon.ico')
         self.action_window.resizable(False, False)
         self.action_window.attributes('-topmost', 'true')
         self.action_window.title(self.action[5])

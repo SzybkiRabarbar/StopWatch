@@ -22,6 +22,7 @@ def open_save_window(self: 'CreateTimer'):
         self.save_window.attributes('-topmost', 'true')
         self.save_window.grab_set()
         self.save_window.title("Save Your Progres")
+        self.save_window.iconbitmap(self.App.static_path / 'icon.ico')
         self.save_window.config(background=self.App.MIDCOLOR)
         self.save_window.geometry("320x385" + self.get_shift())
         
