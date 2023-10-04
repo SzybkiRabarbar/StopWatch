@@ -102,7 +102,7 @@ class TimerApp():
     def clear_window(self):
         """Destroy all widgets from window(Frame)"""
         for widget in self.window.winfo_children(): 
-                widget.destroy()
+            widget.destroy()
         try:
             self.window.after_cancel(self.loop_id)
         except AttributeError:

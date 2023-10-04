@@ -1,5 +1,6 @@
 from sqlite3 import connect
 from pandas import DataFrame
+from Source.CreateDB.example_data import append_example_data
 
 def create_db_sqlite(path):
     """Creates sqlite.db and tables in it"""
@@ -27,11 +28,14 @@ def create_db_sqlite(path):
     )
     conn.commit()
     
-    df_activities = DataFrame({
+    df = DataFrame({
         'name': ['SOMETHING'],
         'bg': ['#808080'],
         'fg': ['#aaaaaa']
     })
-    df_activities.to_sql('activities', conn, if_exists='append', index=False)
+    df.to_sql('activities', conn, if_exists='append', index=False)
+    
+    ### Only in TimerWithExampleData.exe
+    # append_example_data(conn)
     
     conn.close()

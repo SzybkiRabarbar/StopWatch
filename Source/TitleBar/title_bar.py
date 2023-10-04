@@ -54,10 +54,51 @@ class CreateTitleBar:
                 self.App.root.minimized = False                              
 
         # put a close button on the title bar
-        self.close_button = tk.Button(title_bar, text='  ✕  ', command=lambda: [self.App.root.destroy()],bg=self.App.BARBGC,padx=2,pady=2,font=("calibri", 13),bd=0,fg=self.App.BARFGC,highlightthickness=0)
-        self.return_button = tk.Button(title_bar, text=' ⟲ ', command=self.App.open_menu,bg=self.App.BARBGC,padx=2,pady=2,bd=0,fg=self.App.BARFGC,font=("calibri", 13),highlightthickness=0)
-        self.minimize_button = tk.Button(title_bar, text=' — ',command=minimize_me,bg=self.App.BARBGC,padx=2,pady=2,bd=0,fg=self.App.BARFGC,font=("calibri", 13),highlightthickness=0)
-        title_bar_title = tk.Label(title_bar, text='TimerApp', bg=self.App.BARBGC,bd=0,fg=self.App.BARFGC,font=("helvetica", 10),highlightthickness=0)
+        self.close_button = tk.Button(
+            title_bar,
+            bg=self.App.BARBGC,
+            padx=2,
+            pady=2,
+            font=("calibri", 13),
+            bd=0,
+            fg=self.App.BARFGC,
+            highlightthickness=0,
+            text='  ✕  ',
+            command=lambda: [self.App.root.destroy()]
+        )
+        self.return_button = tk.Button(
+            title_bar,
+            bg=self.App.BARBGC,
+            padx=2,
+            pady=2,
+            bd=0,
+            fg=self.App.BARFGC,
+            font=("calibri", 13),
+            highlightthickness=0,
+            text=' ⟲ ',
+            command=self.App.open_menu
+        )
+        self.minimize_button = tk.Button(
+            title_bar,
+            bg=self.App.BARBGC,
+            padx=2,
+            pady=2,
+            bd=0,
+            fg=self.App.BARFGC,
+            font=("calibri", 13),
+            highlightthickness=0,
+            text=' — ',
+            command=minimize_me
+        )
+        title_bar_title = tk.Label(
+            title_bar,
+            text='TimerApp',
+            bg=self.App.BARBGC,
+            bd=0,
+            fg=self.App.BARFGC,
+            font=("helvetica", 10),
+            highlightthickness=0
+        )
 
         # pack the widgets
         title_bar.pack(fill='x')
@@ -134,13 +175,13 @@ class CreateTitleBar:
             
             if self.App.root.winfo_width() > 150 : # 150 is the minimum width for the window
                 try:
-                    self.App.root.geometry(f"{ self.App.root.winfo_width() + difference }x{ self.App.root.winfo_height() }")
+                    self.App.root.geometry(f"{self.App.root.winfo_width() + difference}x{self.App.root.winfo_height()}")
                 except:
                     pass
             else:
                 if difference > 0: # so the window can't be too small (150x150)
                     try:
-                        self.App.root.geometry(f"{ self.App.root.winfo_width() + difference }x{ self.App.root.winfo_height() }")
+                        self.App.root.geometry(f"{self.App.root.winfo_width() + difference}x{self.App.root.winfo_height()}")
                     except:
                         pass
                     
@@ -158,13 +199,13 @@ class CreateTitleBar:
 
             if self.App.root.winfo_height() > 150: # 150 is the minimum height for the window
                 try:
-                    self.App.root.geometry(f"{ self.App.root.winfo_width()  }x{ self.App.root.winfo_height() + difference}")
+                    self.App.root.geometry(f"{self.App.root.winfo_width()}x{self.App.root.winfo_height() + difference}")
                 except:
                     pass
             else:
                 if difference > 0: # so the window can't be too small (150x150)
                     try:
-                        self.App.root.geometry(f"{ self.App.root.winfo_width()  }x{ self.App.root.winfo_height() + difference}")
+                        self.App.root.geometry(f"{self.App.root.winfo_width()}x{self.App.root.winfo_height() + difference}")
                     except:
                         pass
 
