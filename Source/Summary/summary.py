@@ -25,11 +25,17 @@ class CreateSummary:
     def main(self):
         self.App.clear_window()
         self.App.was_fullscreen = True
-        self.App.root.geometry(f"{self.App.root.winfo_screenwidth()}x{self.App.root.winfo_screenheight()}+0+0")
+        self.App.root.geometry(
+            f"{self.App.root.winfo_screenwidth()}x{self.App.root.winfo_screenheight()}+0+0"
+        )
         
+        self.geometry_icon = tk.StringVar(value='🗗')
         self.range_optionts = ["Total", "Last 7 days", "Last 30 days", "Last 90 days", "Last Year"]
         self.time_range = 0
         self.fetch_dfs_with_range()
+        
+        self.up_button = tk.Frame(self.App.window, background=self.App.BGCOLOR)
+        self.up_button.pack(fill='x')
         
         self.content = tk.Frame(self.App.window, background=self.App.BGCOLOR)
         self.content.columnconfigure(0, weight=1)
@@ -53,6 +59,9 @@ class CreateSummary:
         """Destroy all widgets from content(Frame)"""
         for widget in self.content.winfo_children(): 
             widget.destroy()
+            
+        for widget in self.up_button.winfo_children(): 
+            widget.destroy()
     
     def create_buttons(self):
         """
@@ -60,6 +69,18 @@ class CreateSummary:
         Button click calls create_summary with corresponding activity
         """
         self.clear()
+        
+        tk.Button(
+            self.up_button,
+            background = self.App.MIDCOLOR,
+            foreground = self.App.FGCOLOR,
+            activebackground = self.App.BGCOLOR,
+            activeforeground = self.App.FGCOLOR,
+            font = ('times new roman', 15),
+            textvariable = self.geometry_icon,
+            command = self.change_geometry
+        ).pack(fill='both', expand=True)
+        
         for i, (activity, bg_color, fg_color, id) in enumerate(self.App.df_activity.values.tolist()):
             tk.Button(
                 self.content,
@@ -71,6 +92,20 @@ class CreateSummary:
                 text = activity,
                 command=lambda x = [activity, bg_color, fg_color, id]: self.create_summary(x)
             ).grid(row=i, sticky='nsew')
+    
+    def change_geometry(self):
+        if self.geometry_icon.get() == '🗗':
+            self.geometry_icon.set('🗖')
+            self.App.was_fullscreen = False
+            self.App.root.geometry(
+                f"{self.App.root.winfo_screenwidth() - 300}x{self.App.root.winfo_screenheight() - 300}+150+150"
+            )
+        else:
+            self.geometry_icon.set('🗗')
+            self.App.was_fullscreen = True
+            self.App.root.geometry(
+                f"{self.App.root.winfo_screenwidth()}x{self.App.root.winfo_screenheight()}+0+0"
+            )
     
     def create_summary(self, arg: list[str]):
         """
@@ -85,15 +120,15 @@ class CreateSummary:
         
         #* HEEDER BUTTON
         #| Button that returns to previous list (call create_buttons)
-        top_bar = tk.Frame(self.content)
-        top_bar.pack(fill='x')
+        # top_bar = tk.Frame(self.content)
+        # top_bar.pack(fill='x')
         tk.Button(
-            top_bar,
+            self.up_button,
             background = self.App.MIDCOLOR,
             foreground = self.App.FGCOLOR,
             activebackground = self.App.BGCOLOR,
             activeforeground = self.App.FGCOLOR,
-            font = ('calibri',15),
+            font = ('times new roman',15),
             text = "⭮",
             command = self.create_buttons
         ).pack(fill='both', expand=True)
