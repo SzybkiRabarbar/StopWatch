@@ -194,6 +194,7 @@ class CreateTimer:
         countdown_window.attributes('-topmost', 'true')
         countdown_window.grab_set()
         countdown_window.title('Set countdown')
+        countdown_window.iconbitmap(self.App.static_path / 'icon.ico')
         countdown_window.config(background=self.App.MIDCOLOR)
         countdown_window.geometry(self.get_shift())
         
