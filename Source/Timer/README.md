@@ -5,15 +5,15 @@ Contains timers:
 - **Main** timer:
   Measures duration of activity
 
-  ![timer main](../../Other/Assets/timer_nocheck.jpg)
+  ![timer main](../../Other/Assets/timer_main.gif)
 - **Break** timer:
   Contains sum of durations of all breaks
 
-  ![timer break](../../Other/Assets/timer_nocheck.jpg)
+  ![timer break](../../Other/Assets/timer_break.gif)
 - **Current break** timer:
   Measures duration of current break
 
-  ![timer current break](../../Other/Assets/timer_nocheck.jpg)
+  ![timer current break](../../Other/Assets/timer_curr_br.gif)
 
 ---
 
