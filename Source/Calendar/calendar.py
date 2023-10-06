@@ -94,7 +94,7 @@ class CreateCalendar:
             self.picked_date = self.cal.get_date()
             self.content_title.config(text=self.cal.get_date())
             self.create_grid_with_data()
-        self.loop_id = self.App.window.after(100, self.grab_date_loop)
+        self.App.loop_id = self.App.window.after(100, self.grab_date_loop)
             
     def create_grid_with_data(self):
         """

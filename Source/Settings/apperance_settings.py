@@ -9,7 +9,7 @@ import string
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from Source.Settings.settings import CrateSettings
-# TODO add changing color of titlebar
+
 def change_to_default(self: 'CrateSettings'):
     """Change palette.json responsible for App apperance to defult values"""
     with open(self.App.default_json_path, 'r') as file:
@@ -28,7 +28,38 @@ def change_to_default(self: 'CrateSettings'):
     with open(self.App.palette_json_path, 'w') as file:
         json.dump(palette, file, ensure_ascii=False, indent=4)
     messagebox.showinfo('Changed to default', 'Apperence settings have been hanged to default', parent=self.App.window)
-    self.main()
+    
+    self.App.root.destroy()
+    self.App.__init__()
+
+def change_title_bar_color(self: 'CrateSettings'):
+    """Opens akscolor windows for bgcolor and fgcolor of title bar and change pallete.json"""
+    
+    def get_effect_color(hex_color):
+        t = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        t = tuple(i + 30 if i <= 225 else i - 30 for i in t)
+        return '#' + ''.join(format(i, '02x') for i in t)
+    
+    new_bg = askcolor(title='Choose new backgroud color for Title Bar', color=self.App.BARBGC)[1]
+    if not new_bg:
+        new_bg = self.App.BARBGC
+    new_ef = get_effect_color(new_bg[1::])
+    new_fg = askcolor(title='Choose new text color for Title Bar', color=self.App.BARFGC)[1]
+    if not new_fg:
+        new_fg = self.App.BARFGC
+    
+    with open(self.App.palette_json_path, 'r') as file:
+        palette = json.load(file)
+    
+    palette['BARFGC'] = new_fg
+    palette['EFFECTSCOLOR'] = new_ef
+    palette['BARBGC'] = new_bg
+    
+    with open(self.App.palette_json_path, 'w') as file:
+        json.dump(palette, file, ensure_ascii=False, indent=4)
+    
+    self.App.root.destroy()
+    self.App.__init__()
     
 def change_app_colors(self: 'CrateSettings'):
     """Creates two new frames. For each frame, it calls the create_dummy_view function to create a view with color changing options"""

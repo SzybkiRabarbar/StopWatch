@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 class CrateSettings:
     """Creates label, separators and buttons for diffrent settings"""
     from Source.Settings.apperance_settings import change_to_default
+    from Source.Settings.apperance_settings import change_title_bar_color
     from Source.Settings.apperance_settings import change_app_colors, save_new_colors
     from Source.Settings.apperance_settings import change_font, create_fonts, save_new_font
     from Source.Settings.google_calendar_settings import rm_token, pick_auto_append_activities
@@ -22,6 +23,7 @@ class CrateSettings:
         self.title('Appearance')
         self.separator()
         self.button('Change to default settings', self.change_to_default)
+        self.button('Change colors of Title Bar', self.change_title_bar_color)
         self.button('Change colors of App', self.change_app_colors)
         self.button('Change font', self.change_font)
         self.separator()
