@@ -13,7 +13,7 @@ class TimerApp():
         self.is_files()
         self.icon = False
     
-    def is_files(self): # TODO =========================
+    def is_files(self):
         pass
         # if not exists('data.csv'):
             

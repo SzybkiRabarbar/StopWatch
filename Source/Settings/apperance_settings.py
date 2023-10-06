@@ -1,4 +1,3 @@
-# from os import path
 import tkinter as tk
 from tkinter import font
 import json
@@ -10,7 +9,7 @@ import string
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from Source.Settings.settings import CrateSettings
-
+# TODO add changing color of titlebar
 def change_to_default(self: 'CrateSettings'):
     """Change palette.json responsible for App apperance to defult values"""
     with open(self.App.default_json_path, 'r') as file:

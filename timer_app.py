@@ -3,6 +3,7 @@ from pathlib import Path
 from os import path, makedirs
 import json
 import tkinter as tk
+from tkinter import messagebox
 from pandas import read_sql_query
 from sqlite3 import connect
 
@@ -17,7 +18,6 @@ from Source.Summary.summary import CreateSummary
 from Source.Event.event_toplevel import OpenEventToplevel
 from Source.Settings.settings import CrateSettings
 from Source.GoogleCalendar.google_cal import add_to_google_calendar
-
 
 class TimerApp():
     
@@ -150,6 +150,9 @@ class TimerApp():
             json.dump(palette, file, ensure_ascii=False, indent=4)
         
         self.open_menu()
+    
+    def confirm_execution(self):
+        messagebox.showinfo('Changes saved', 'Your changes have been successfully saved')
     
     def open_menu(self):
         """Calls CreateMenu"""

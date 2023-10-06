@@ -1,14 +1,3 @@
-
-# TODO zapisać kolory główne aplikacji w osobnym pliku json i dodać możliwosć zmiany ich w settings
-# TODO pomyśleć o dodawaniu nowego kalendarza do GCalendar, zamiast dodawać do głównego
-    #* tworzenie kalendarza
-    #* dodawania do stworzonego kalendarza
-# TODO naprawić bład 500
-# TODO dodać powiadomienie w timer (użytkownik może ustawić sobie budzik na np 45 minut itp) (zrobic prosty gdzie wpisuje się minuty)
-# TODO pomyśleć o przenoszeniu aktywnosci między dniami (po 24), można dodac sprawdzanie po wypisaniu aktualnych
-# TODO restrukturyzacja kodu (podzielenie metod na osobne pliki, przekazywanie self jako argumentu)
-# TODO wyjść z wersji testowej calendar api
-
 from os import remove as remove_file
 import tkinter as tk
 from tkinter import ttk

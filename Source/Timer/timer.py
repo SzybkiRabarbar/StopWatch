@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from timer_app import TimerApp
 
-class CreateTimer:
+class CreateTimer: # TODO add msgbox on exit and to topbar func (only in timer)
     """
     Creates main timer, checkbutton, exit button, break timer, currnet break timer and Count Down button.\n
     Normally main timer counts down the time,

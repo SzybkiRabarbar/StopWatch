@@ -9,7 +9,8 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-
+# TODO indicator that try to connect
+# TODO handle scenario then gen token is not ended properlly
 def find_calendar_id(service):
     """
     Iter through calendars in Google Calendar.\n

@@ -353,14 +353,16 @@ class CreateSummary:
             )
         self.App.conn.commit()
         self.fetch_dfs_with_range()
+        self.App.confirm_execution()
         self.create_buttons()
     
-    def change_name(self):
+    def change_name(self): 
         """
         Change name of picked activity.\n
         Opens window with text entry for new name and button to save new name
         """        
         change_name_window = tk.Toplevel(self.mid_frame)
+        change_name_window.grab_set()
         change_name_window.title('Change name')
         change_name_window.iconbitmap(self.App.static_path / 'icon.ico')
         change_name_window.config(background=self.App.BGCOLOR)
@@ -399,6 +401,7 @@ class CreateSummary:
                 f'UPDATE activities SET name = "{new_activity}" WHERE name = "{self.activity}"'
             )
             self.App.conn.commit()
+            self.App.confirm_execution()
         self.fetch_dfs_with_range()
         self.create_buttons()
     
@@ -420,6 +423,7 @@ class CreateSummary:
             curr.execute(f'DELETE FROM activities WHERE id = "{del_id}"')
             self.App.conn.commit()
             pick_new_activity.destroy()
+            self.App.confirm_execution()
             self.App.open_menu()
         
         def delete_data():
@@ -430,6 +434,7 @@ class CreateSummary:
             curr.execute(f'DELETE FROM activities WHERE id = "{id_number}"')
             self.App.conn.commit()
             pick_new_activity.destroy()
+            self.App.confirm_execution()
             self.App.open_menu()
         
         is_sure = messagebox.askyesno(
@@ -440,7 +445,7 @@ class CreateSummary:
         if is_sure:
             pick_new_activity = tk.Toplevel(self.App.root)
             pick_new_activity.resizable(False, False)
-            pick_new_activity.attributes('-topmost', 'true')
+            pick_new_activity.grab_set()
             pick_new_activity.title(self.activity)
             pick_new_activity.iconbitmap(self.App.static_path / 'icon.ico')
             pick_new_activity.geometry(self.App.default_window_shift)
@@ -459,7 +464,7 @@ class CreateSummary:
             ttk.Combobox(
                 pick_new_activity,
                 textvariable = picked_activity,
-                values = self.App.df_activity['name'].to_list(),
+                values = self.App.df_activity[self.App.df_activity['name'] != self.activity]['name'].to_list(),
                 state = 'readonly',
                 font = (self.App.FONTF, 15),
                 background = self.App.MIDCOLOR,

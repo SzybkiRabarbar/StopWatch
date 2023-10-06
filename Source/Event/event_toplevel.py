@@ -26,7 +26,7 @@ class OpenEventToplevel:
         self.action_window = tk.Toplevel(self.App.root)
         self.action_window.iconbitmap(self.App.static_path / 'icon.ico')
         self.action_window.resizable(False, False)
-        self.action_window.attributes('-topmost', 'true')
+        self.action_window.attributes('-topmost', True)
         self.action_window.title(self.action[5])
         self.action_window.geometry(self.App.default_window_shift)
         self.action_window.config(bg=self.activity[1])
@@ -124,7 +124,7 @@ class OpenEventToplevel:
         """Destroy widgets from action_window"""
         for widget in self.action_window.winfo_children(): 
             widget.destroy()        
-
+    
     def change_desc(self):
         """Creates text box and button witch call save_new_desc"""
         self.clear()
@@ -180,6 +180,7 @@ class OpenEventToplevel:
             )
             self.App.conn.commit()
         self.action_window.destroy()
+        self.App.confirm_execution()
         self.App.open_menu()
     
     def change_activity(self):
@@ -239,6 +240,7 @@ class OpenEventToplevel:
                 )
             self.App.conn.commit()
         self.action_window.destroy()
+        self.App.confirm_execution()
         self.App.open_menu()
         
     def delete(self):
@@ -256,6 +258,7 @@ class OpenEventToplevel:
             )
             self.App.conn.commit()
             self.action_window.destroy()
+            self.App.confirm_execution()
             self.App.open_menu()
             
     def google_calendar(self):

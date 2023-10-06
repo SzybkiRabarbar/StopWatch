@@ -19,7 +19,6 @@ def open_save_window(self: 'CreateTimer'):
         self.App.window.after_cancel(self.App.loop_id)
         self.save_window = tk.Toplevel(self.App.root)
         self.save_window.resizable(False, False)
-        self.save_window.attributes('-topmost', 'true')
         self.save_window.grab_set()
         self.save_window.title("Save Your Progres")
         self.save_window.iconbitmap(self.App.static_path / 'icon.ico')
@@ -71,6 +70,7 @@ def open_save_window(self: 'CreateTimer'):
             background = self.App.BGCOLOR,
             foreground = self.App.FGCOLOR,
             font = (self.App.FONTF, 15),
+            wrap = 'word',
             height = 5,
             width = 25,
             padx = 5,
