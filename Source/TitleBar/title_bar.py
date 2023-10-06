@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox
 from ctypes import windll
 
 from typing import TYPE_CHECKING
@@ -53,6 +54,25 @@ class CreateTitleBar:
             if self.App.root.minimized == True:
                 self.App.root.minimized = False                              
 
+        def ask_if_leave() -> bool:
+            return messagebox.askyesno("Exit without saving", "Are you sure you want to exit without saving your progress?")
+        
+        def close():
+            """Close root"""
+            if self.App.is_in_timer:
+                if ask_if_leave():
+                    self.App.root.destroy()
+            else:
+                self.App.root.destroy()
+        
+        def return_():
+            """Return to menu"""
+            if self.App.is_in_timer:
+                if ask_if_leave():
+                    self.App.open_menu()
+            else:
+                self.App.open_menu()
+        
         # put a close button on the title bar
         self.close_button = tk.Button(
             title_bar,
@@ -64,7 +84,7 @@ class CreateTitleBar:
             fg=self.App.BARFGC,
             highlightthickness=0,
             text='  ✕  ',
-            command=lambda: [self.App.root.destroy()]
+            command=close
         )
         self.return_button = tk.Button(
             title_bar,
@@ -76,7 +96,7 @@ class CreateTitleBar:
             font=("calibri", 13),
             highlightthickness=0,
             text=' ⟲ ',
-            command=self.App.open_menu
+            command=return_
         )
         self.minimize_button = tk.Button(
             title_bar,

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from timer_app import TimerApp
 
-class CreateTimer: # TODO add msgbox on exit and to topbar func (only in timer)
+class CreateTimer:
     """
     Creates main timer, checkbutton, exit button, break timer, currnet break timer and Count Down button.\n
     Normally main timer counts down the time,
@@ -38,7 +38,9 @@ class CreateTimer: # TODO add msgbox on exit and to topbar func (only in timer)
         self.countdown_timer = tk.StringVar(value='Count Down Time')
         
         self.is_running = tk.IntVar(value=1)
-        self.button_text = tk.StringVar(value="STOP")    
+        self.button_text = tk.StringVar(value="STOP")
+        
+        self.App.is_in_timer = True
     
     def main(self):
         self.App.clear_window()
@@ -74,6 +76,10 @@ class CreateTimer: # TODO add msgbox on exit and to topbar func (only in timer)
             indicatoron = False
         ).pack(side='left', fill='y', padx=5)
         
+        def save():
+            if messagebox.askyesno('Save', 'Are you sure you want to quit and save your progress?'):
+                self.open_save_window()
+        
         #| Exits timer and open save_window
         tk.Button(
             button_container,
@@ -82,8 +88,8 @@ class CreateTimer: # TODO add msgbox on exit and to topbar func (only in timer)
             bg = self.App.BGCOLOR,
             activebackground = self.App.FGCOLOR,
             activeforeground = self.App.BGCOLOR,
-            text = 'Exit',
-            command = self.open_save_window
+            text = 'Save',
+            command = save
         ).pack(side='right', padx=5)
         
         #| Contains break timers

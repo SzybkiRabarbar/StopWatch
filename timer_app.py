@@ -26,6 +26,7 @@ class TimerApp():
     def __init__(self) -> None:
         self.get_paths()
         self.load_pallete()
+        self.conn = connect(self.sqlite_path)
         self.build_tk_root()
         self.open_menu()
     
@@ -42,18 +43,18 @@ class TimerApp():
         CreateTitleBar(self)
         self.root.resizable(False, False)
         
-        #| Global Variables
-        self.conn = connect(self.sqlite_path)
-        """Connection with sqlite database"""
+        ### Global Variables
         divided_width = self.root.winfo_screenwidth() // 3
         divided_height = self.root.winfo_screenheight() // 5
+        #| Determines the default position of the root window
         self.default_window_shift = f"+{divided_width}+{divided_height}"
-        """Determines the default position of the root window """
+        #| Changes then the window is set to fullscreen.
+        #| Helps determine whether the default window position (geometry) should be set
         self.was_fullscreen = False
-        """
-        Bool, changed if the window was set to fullscreen.
-        Helps determine whether the default window position should be set
-        """
+        #| Bool, changes to True then timer is initialized or to False then menu is initalized
+        #| Allows to determine whether the back and close buttons should ask for confirmation
+        self.is_in_timer = False
+        
         self.root.geometry('1x1' + self.default_window_shift)
         
     def get_paths(self):

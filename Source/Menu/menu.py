@@ -14,9 +14,13 @@ class CreateMenu:
     
     def main(self):
         self.App.clear_window()
+        
         if self.App.was_fullscreen:
             self.App.root.geometry(self.App.default_window_shift)
             self.App.was_fullscreen = False
+        elif self.App.is_in_timer:
+            self.App.is_in_timer = False
+            
         self.App.root.geometry('446x719')
         self.App.window.config(bg=self.App.BGCOLOR)
         
