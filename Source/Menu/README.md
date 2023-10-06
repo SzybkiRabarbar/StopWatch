@@ -1,5 +1,7 @@
 # Menu
 
+![menu](../../Other/Assets/menu.png)
+
 Menu contains 5 buttons that open other parts of the application
 
 - **Timer**: responsible for measuring time
