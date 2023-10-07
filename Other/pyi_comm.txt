@@ -1,1 +1,3 @@
 pyinstaller --onefile --noconsole --icon=Static/icon.ico --hidden-import babel.numbers --add-data 'Static/*;Static' --add-data 'Source/*;Source/' --distpath Exe --name Timer timer_app.py
+
+pyinstaller --onefile --noconsole --icon=Static/icon.ico --hidden-import babel.numbers --add-data 'Static/*;Static' --add-data 'Source/*;Source/' --distpath Exe --name TimerWithExampleData timer_app.py

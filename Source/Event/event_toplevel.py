@@ -262,13 +262,7 @@ class OpenEventToplevel:
             self.App.open_menu()
             
     def google_calendar(self):
-        """
-        Calls append_to_google_calendar, opens messagebox with results
-        """
-        is_succes, res = self.App.append_to_google_calendar(
-            self.action[5], self.action[0], self.action[1], int(self.action[2]) + int(self.action[3]), self.action[4]
+        """Calls append_to_google_calendar"""
+        self.App.append_to_google_calendar(
+            self.action[5], self.action[0], self.action[1], int(self.action[2]) + int(self.action[3]), self.action[4], self.action_window
         )
-        if is_succes:
-            messagebox.showinfo(self.action[5], f"{self.action[5]} was succesful added to your calendar", parent=self.action_window)
-        else:
-            messagebox.showerror(self.action[5], res, parent=self.action_window)

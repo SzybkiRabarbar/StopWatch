@@ -17,7 +17,8 @@ from Source.Calendar.calendar import CreateCalendar
 from Source.Summary.summary import CreateSummary
 from Source.Event.event_toplevel import OpenEventToplevel
 from Source.Settings.settings import CrateSettings
-from Source.GoogleCalendar.google_cal import add_to_google_calendar
+from Source.GoogleCalendar.google_cal_thread_handler import ThreadHandler
+# from Source.GoogleCalendar.google_cal import add_to_google_calendar
 
 class TimerApp():
     
@@ -26,6 +27,7 @@ class TimerApp():
     def __init__(self) -> None:
         self.get_paths()
         self.load_pallete()
+        self.google_calendar = ThreadHandler(self)
         self.conn = connect(self.sqlite_path)
         self.build_tk_root()
         self.open_menu()
@@ -179,9 +181,11 @@ class TimerApp():
         """Calls CrateSettings"""
         CrateSettings(self)
     
-    def append_to_google_calendar(self, name: str, date: str, start_time: str, duration: int, desc: str) -> tuple[int, str]:
-        """Calls add_to_google_calendar"""
-        return add_to_google_calendar(self.db_path, self.static_path, name, date, start_time, duration, desc)
+    def append_to_google_calendar(self, name: str, date: str, start_time: str, duration: int, desc: str, ancestor: tk.Toplevel = None):
+        """Starts the process of adding data to Google Calendar"""
+        if not ancestor:
+            ancestor = self.root
+        self.google_calendar.append_data(name, date, start_time, duration, desc, ancestor)
 
 if __name__=="__main__":
     t = TimerApp()

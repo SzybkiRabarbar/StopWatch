@@ -143,11 +143,7 @@ def save_and_quit(self: 'CreateTimer'):
     df.to_sql('data', self.App.conn, if_exists='append',index=False)
     
     if activity_data.iloc[0, 1]:
-        is_succes, res = self.App.append_to_google_calendar(picked_activity, date, start_time, int(self.main_time.get() + int(self.break_time.get())), desc)
-        if is_succes:
-            messagebox.showinfo(picked_activity, f"{picked_activity} was succesful added to your calendar", parent=self.save_window)
-        else:
-            messagebox.showerror(picked_activity, f"Action wasn't added to Google Calendar.\nError occurs:\n{res}", parent=self.save_window)
+        self.App.append_to_google_calendar(picked_activity, date, start_time, int(self.main_time.get() + int(self.break_time.get())), desc)
     
     self.save_window.destroy()
     self.App.open_menu()
