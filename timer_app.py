@@ -18,7 +18,6 @@ from Source.Summary.summary import CreateSummary
 from Source.Event.event_toplevel import OpenEventToplevel
 from Source.Settings.settings import CrateSettings
 from Source.GoogleCalendar.google_cal_thread_handler import ThreadHandler
-# from Source.GoogleCalendar.google_cal import add_to_google_calendar
 
 class TimerApp():
     
