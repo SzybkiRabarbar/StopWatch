@@ -1,6 +1,6 @@
 # Event window
 
-Event window opens after selecting an action from the calendar or summary
+Event window opens after selecting an action from the [calendar](../Calendar/) or [summary](../Summary/)
 
 ![event preview](../../Other/Assets/event_prev.png)
 

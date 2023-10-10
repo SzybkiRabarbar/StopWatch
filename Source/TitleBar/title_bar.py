@@ -17,7 +17,10 @@ class CreateTitleBar:
         self.custom_title_bar()
 
     def custom_title_bar(self):
-        #@ https://github.com/Terranova-Python/Tkinter-Menu-Bar
+        """
+        Changes apperance of root Title Bar
+        @ https://github.com/Terranova-Python/Tkinter-Menu-Bar
+        """
         self.App.root.overrideredirect(True) # turns off title bar, geometry
         #root.iconbitmap("your_icon.ico") # to show your own icon 
         self.App.root.minimized = False # only to know if root is minimized
