@@ -9,6 +9,6 @@ Contains:
 - — **Minimalize** button
 
 - ⟲ **Return** button
-  > Return button opens menu
-
-![title bar](../../Other/Assets/title_bar_return.gif)
+  > Return button opens [menu](../Menu/)
+  
+  ![title bar](../../Other/Assets/title_bar_return.gif)
