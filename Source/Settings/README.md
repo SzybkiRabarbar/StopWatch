@@ -13,10 +13,12 @@ In the settings tab you can change [appearance](#appearance) of application or m
 
   ![settings color](../../Other/Assets/sett_color.png)
 - **Change font**: allows you to change the font in the application
+  
   ![settings font](../../Other/Assets/sett_font.png)
 
 ## Google Calendar
 
 - **Remove Data About Used Account**: deletes google account login details
 - **Auto Append To Calendar**: allows you to select activities for which adding to the Google calendar should be automatic (after saving, you will be automatically asked whether to add to the Google calendar)
+
   ![settings auto append](../../Other/Assets/sett_auto_append.gif)
