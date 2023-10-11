@@ -4,14 +4,14 @@ import tkinter as tk
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from timer_app import TimerApp
+    from stop_watch import StopWatch
 
 class CreateCalendar:
     """
     Creates calendar and daily activity list.\n
     Daily activity list depends on date selected in the calendar.
     """    
-    def __init__(self, App: 'TimerApp') -> None:
+    def __init__(self, App: 'StopWatch') -> None:
         self.App = App
         self.main()
         

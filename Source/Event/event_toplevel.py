@@ -7,7 +7,7 @@ from tkinter import messagebox
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from timer_app import TimerApp
+    from stop_watch import StopWatch
 
 class OpenEventToplevel:
     """
@@ -17,7 +17,7 @@ class OpenEventToplevel:
     ]\n
     Show information about action and buttons to modify that data
     """
-    def __init__(self, App: 'TimerApp', arg: list[list, list]) -> None:
+    def __init__(self, App: 'StopWatch', arg: list[list, list]) -> None:
         self.App = App
         self.main(arg)
     

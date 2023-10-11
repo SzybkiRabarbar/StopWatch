@@ -6,13 +6,13 @@ from Source.GoogleCalendar.google_cal import add_to_google_calendar
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from timer_app import TimerApp
+    from stop_watch import StopWatch
 
 class ThreadHandler:
     """
     Makes thread that appends data to the Google Calendar
     """
-    def __init__(self, App: 'TimerApp') -> None:
+    def __init__(self, App: 'StopWatch') -> None:
         self.App = App
     
     def append_data(self, name: str, date: str, start_time: str, duration: int, desc: str, ancestor):

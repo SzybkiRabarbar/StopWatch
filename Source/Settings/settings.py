@@ -2,7 +2,7 @@ import tkinter as tk
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from timer_app import TimerApp
+    from stop_watch import StopWatch
 
 class CrateSettings:
     """Creates label, separators and buttons for diffrent settings"""
@@ -11,7 +11,7 @@ class CrateSettings:
     from Source.Settings.apperance_settings import change_app_colors, save_new_colors
     from Source.Settings.apperance_settings import change_font, create_fonts, save_new_font
     from Source.Settings.google_calendar_settings import rm_token, pick_auto_append_activities
-    def __init__(self, App: 'TimerApp') -> None:
+    def __init__(self, App: 'StopWatch') -> None:
         self.App = App
         self.main()
         

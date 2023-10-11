@@ -7,7 +7,7 @@ from pygame import mixer
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from timer_app import TimerApp
+    from stop_watch import StopWatch
 
 class CreateTimer:
     """
@@ -18,7 +18,7 @@ class CreateTimer:
     and current break timer stores time of current break.
     """
     from Source.Timer.save_window import open_save_window, save_and_quit
-    def __init__(self, App: 'TimerApp') -> None:
+    def __init__(self, App: 'StopWatch') -> None:
         self.App = App
         self.main()
     

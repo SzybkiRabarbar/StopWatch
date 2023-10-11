@@ -35,7 +35,7 @@ def create_db_sqlite(path):
     })
     df.to_sql('activities', conn, if_exists='append', index=False)
     
-    ### Only in TimerWithExampleData.exe
+    ### Only in StopWatchExample.exe
     # append_example_data(conn)
     
     conn.close()

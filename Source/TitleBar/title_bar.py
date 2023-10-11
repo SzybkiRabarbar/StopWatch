@@ -4,7 +4,7 @@ from ctypes import windll
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from timer_app import TimerApp
+    from stop_watch import StopWatch
 
 class CreateTitleBar:
     """
@@ -12,7 +12,7 @@ class CreateTitleBar:
     Custom titlebar has most of functions of the basic one.
     """
     
-    def __init__(self, App: 'TimerApp') -> None:
+    def __init__(self, App: 'StopWatch') -> None:
         self.App = App
         self.custom_title_bar()
 
@@ -115,7 +115,7 @@ class CreateTitleBar:
         )
         title_bar_title = tk.Label(
             title_bar,
-            text='TimerApp',
+            text='StopWatch',
             bg=self.App.BARBGC,
             bd=0,
             fg=self.App.BARFGC,

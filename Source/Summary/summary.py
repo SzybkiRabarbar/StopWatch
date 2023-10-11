@@ -7,7 +7,7 @@ from tkinter import messagebox
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from timer_app import TimerApp
+    from stop_watch import StopWatch
 
 class CreateSummary:
     """
@@ -18,7 +18,7 @@ class CreateSummary:
         - buttons that modify picked activity & combobox with time range selection
         - list of action from that activity from selected time period
     """
-    def __init__(self, App: 'TimerApp') -> None:
+    def __init__(self, App: 'StopWatch') -> None:
         self.App = App
         self.main()
         

@@ -2,7 +2,7 @@
 
 [**Timer**](/Source/Timer/) contains information about measuring and recording progress
 
-In [**Calendar**](/Source/Calendar/), [**Summary**](/Source/Summary/) and [**Event**](/Source/Summary/) are descriptions about checking and tracking progress 
+In [**Calendar**](/Source/Calendar/), [**Summary**](/Source/Summary/) and [**Event**](/Source/Event/) are descriptions about checking and tracking progress 
 
 [**Settings**](/Source/Settings/) describes how to change the appearance of the application and Google Calendar options
 
