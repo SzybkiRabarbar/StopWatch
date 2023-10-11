@@ -13,6 +13,7 @@ In the settings tab you can change [appearance](#appearance) of application or m
 
   ![settings color](../../Other/Assets/sett_color.png)
 - **Change font**: allows you to change the font in the application
+  
   ![settings font](../../Other/Assets/sett_font.png)
 
 ## Google Calendar
