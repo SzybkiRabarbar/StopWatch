@@ -43,6 +43,6 @@ Contains:
 - **Combobox**:
   in which you choose what activity you want to save the actions as
 
-  > If you want to save the actions as a new activity, you can enter a new name in the combobox. You can also choose the background and text color
-
+  > If you want to save the actions as a new activity, you can enter a new name in the combobox. 
+  
   ![Save Window Combobox](../../Other/Assets/save_win_button.gif)

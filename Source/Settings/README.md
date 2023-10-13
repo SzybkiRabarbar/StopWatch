@@ -19,6 +19,6 @@ In the settings tab you can change [appearance](#appearance) of application or m
 ## Google Calendar
 
 - **Remove Data About Used Account**: deletes google account login details
-- **Auto Append To Calendar**: allows you to select activities for which adding to the Google calendar should be automatic (after saving, you will be automatically asked whether to add to the Google calendar)
+- **Auto Append To Calendar**: allows you to select activities for which adding sessions to the Google calendar should be automatic (after saving, you will be automatically asked whether to add action to the Google calendar)
 
   ![settings auto append](../../Other/Assets/sett_auto_append.gif)

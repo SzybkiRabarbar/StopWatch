@@ -4,11 +4,11 @@
 
 Contains:
 
-- ✕ **Close** button
+- **Close** button
 
-- — **Minimalize** button
-
-- ⟲ **Return** button
+- **Return** button
   > Return button opens [menu](../Menu/)
   
   ![title bar](../../Other/Assets/title_bar_return.gif)
+
+- **Minimalize** button
